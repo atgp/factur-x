@@ -1,0 +1,35 @@
+{
+    "name": "atgp/factur-x",
+    "description": "PHP library to manage your Factur-X / ZUGFeRD 2.0 PDF invoices files",
+    "keywords": [
+        "php",
+        "invoice",
+        "factur-x",
+        "zugferd",
+        "pdf",
+        "xml"
+    ],
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Lucas Gouy-Pailler",
+            "email": "lucas.gouypailler@atgp.net"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Atgp\\FacturX\\": "src/"
+        }
+    },
+    "require": {
+        "php": ">=5.6",
+        "setasign/fpdi-fpdf": "^2.0",
+        "smalot/pdfparser": "^0.13.2",
+        "ext-dom": "*",
+        "ext-simplexml": "*",
+        "ext-libxml": "*",
+        "ext-zlib": "*",
+        "ext-fileinfo": "*"
+    }
+}
