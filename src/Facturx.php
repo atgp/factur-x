@@ -323,35 +323,32 @@ class Facturx
         $xmp = simplexml_load_file(__DIR__.'/../xmp/'.static::FACTURX_XMP);
         $description_nodes = $xmp->xpath('rdf:Description');
 
-        $description_nodes[0]->ConformanceLevel = strtoupper(static::FACTURX_PROFIL_TO_XMP[$this->profil]);
-        $metadata_to_edit = $description_nodes[0]->asXML();
-        $pdfWriter->AddMetadataDescriptionNode($metadata_to_edit);
+        $desc_fx = $description_nodes[0];
+        $desc_fx->children('fx', true)->ConformanceLevel = strtoupper(static::FACTURX_PROFIL_TO_XMP[$this->profil]);
+        $pdfWriter->AddMetadataDescriptionNode($desc_fx->asXML());
 
-        $metadata_schema = $description_nodes[1]->asXML();
-        $pdfWriter->AddMetadataDescriptionNode($metadata_schema);
+        $pdfWriter->AddMetadataDescriptionNode($description_nodes[1]->asXML());
 
         $desc_pdfaid = $description_nodes[2];
-        $desc_pdfaid = $desc_pdfaid->asXML();
-        $pdfWriter->AddMetadataDescriptionNode($desc_pdfaid);
+        $pdfWriter->AddMetadataDescriptionNode($desc_pdfaid->asXML());
 
         $desc_dc = $description_nodes[3];
-        $desc_dc->title->Alt->li = $pdf_metadata_infos['title'];
-        $desc_dc->creator->Seq->li = $pdf_metadata_infos['author'];
-        $desc_dc->description->Alt->li = $pdf_metadata_infos['subject'];
-        $desc_dc = $desc_dc->asXML();
-        $pdfWriter->AddMetadataDescriptionNode($desc_dc);
+        $desc_nodes = $desc_dc->children('dc', true);
+        $desc_nodes->title->children('rdf', true)->Alt->li = $pdf_metadata_infos['title'];
+        $desc_nodes->creator->children('rdf', true)->Seq->li = $pdf_metadata_infos['author'];
+        $desc_nodes->description->children('rdf', true)->Alt->li = $pdf_metadata_infos['subject'];
+        $pdfWriter->AddMetadataDescriptionNode($desc_dc->asXML());
 
         $desc_adobe = $description_nodes[4];
-        $desc_adobe->Producer = 'FPDF';
-        $desc_adobe = $desc_adobe->asXML();
-        $pdfWriter->AddMetadataDescriptionNode($desc_adobe);
+        $desc_adobe->children('pdf', true)->Producer = 'FPDF';
+        $pdfWriter->AddMetadataDescriptionNode($desc_adobe->asXML());
 
         $desc_xmp = $description_nodes[5];
-        $desc_xmp->CreatorTool = sprintf('Factur-X PHP library v%s by @GP', static::VERSION);
-        $desc_xmp->CreateDate = $pdf_metadata_infos['createdDate'];
-        $desc_xmp->ModifyDate = $pdf_metadata_infos['modifiedDate'];
-        $desc_xmp = $desc_xmp->asXML();
-        $pdfWriter->AddMetadataDescriptionNode($desc_xmp);
+        $xmp_nodes = $desc_xmp->children('xmp', true);
+        $xmp_nodes->CreatorTool = sprintf('Factur-X PHP library v%s by @GP', static::VERSION);
+        $xmp_nodes->CreateDate = $pdf_metadata_infos['createdDate'];
+        $xmp_nodes->ModifyDate = $pdf_metadata_infos['modifiedDate'];
+        $pdfWriter->AddMetadataDescriptionNode($desc_xmp->asXML());
 
         return $pdfWriter;
     }
