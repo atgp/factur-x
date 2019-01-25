@@ -52,7 +52,7 @@ class Facturx
      *
      * @return string
      */
-    public function getFacturxXmlFromPdf($pdfInvoice, $checkXsd)
+    public function getFacturxXmlFromPdf($pdfInvoice, $checkXsd = true)
     {
         $pdfBinary = null;
         $pdfFile = null;
