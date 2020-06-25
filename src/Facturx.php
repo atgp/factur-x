@@ -75,12 +75,14 @@ class Facturx
             }
             $facturx_found = false;
             $filespec = $pdfParsed->getObjectsByType('Filespec');
-            $facturxLength = 0;
+            $facturxLength = null;
             foreach ($filespec as $spec) {
                 $specDetails = $spec->getDetails();
                 if (static::FACTURX_FILENAME == $specDetails['F']) {
                     $facturx_found = true;
-                    $facturxLength = $specDetails['EF']['F']['Length']; // Get file size
+                    if (!empty($specDetails['EF']) && isset($specDetails['EF']['F']) && isset($specDetails['EF']['F']['Length'])) {
+                        $facturxLength = $specDetails['EF']['F']['Length']; // Get file size
+                    }
                     break;
                 }
             }
