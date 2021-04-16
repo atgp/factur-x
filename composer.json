@@ -1,5 +1,5 @@
 {
-    "name": "atgp/factur-x",
+    "name": "bleetic/factur-x",
     "description": "PHP library to manage your Factur-X / ZUGFeRD 2.0 PDF invoices files",
     "keywords": [
         "php",
