@@ -62,7 +62,7 @@
                         );
                     }
                     $result = $facturx->generateFacturxFromFiles($pdf, $facturx_xml,
-                        'autodetect', true, __DIR__.'/', $attachment_files, true);
+                        'autodetect', true, __DIR__.'/', $attachment_files, true, $_POST['relationship']);
                 } catch (Exception $e) {
                     $resultBodyHtml = 'Error while generating the Factur-X :<pre>' . $e.'</pre>';
                 }
@@ -95,6 +95,14 @@
                                         <div class="form-group">
                                             <label>Choose the Factur-X XML file to link</label>
                                             <input type="file" class="form-control-file" name="xml_facturx_tolink" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Choose the Factur-X XML file embarkation relationship</label>
+                                            <select name="relationship" class="form-control">
+                                                <option value="Data" selected>Data</option>
+                                                <option value="Source">Source</option>
+                                                <option value="Alternative">Alternative</option>
+                                            </select>
                                         </div>
                                         <div class="form-group">
                                             <label>(Optional) Choose a file to link :</label>
