@@ -145,7 +145,7 @@ class Facturx
             throw new \Exception("Wrong profil '$this->profil' for Factur-X invoice.");
         }
         $xsdFilename = static::FACTURX_PROFIL_TO_XSD[$this->profil];
-        $xsdFile = __DIR__.'/../xsd/factur-x/'.$xsdFilename;
+        $xsdFile = __DIR__.'/../xsd/'.$xsdFilename;
         try {
             libxml_use_internal_errors(true);
             $schemaValidated = $doc->schemaValidate($xsdFile);
