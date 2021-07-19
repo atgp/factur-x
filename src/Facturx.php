@@ -19,11 +19,12 @@ class Facturx
     const FACTURX_ENCODING = 'UTF-8';
     const FACTURX_FILENAME = 'factur-x.xml';
     const FACTURX_PROFIL_TO_XSD = array(
-        'minimum' => 'FACTUR-X_BASIC-WL.xsd',
-        'basicwl' => 'FACTUR-X_BASIC-WL.xsd',
-        'basic' => 'FACTUR-X_EN16931.xsd',
-        'en16931' => 'FACTUR-X_EN16931.xsd',
-        'zugferd' => 'ZUGFeRD1p0.xsd',
+        'minimum' => 'factur-x/minimum/FACTUR-X_BASIC-WL.xsd',
+        'basic-wl' => 'factur-x/basic-wl/FACTUR-X_BASIC-WL.xsd',
+        'basic' => 'factur-x/basic/FACTUR-X_EN16931.xsd',
+        'en16931' => 'factur-x/en16931/FACTUR-X_EN16931.xsd',
+        'extended' => 'factur-x/extended/FACTUR-X_EXTENDED.xsd',
+        'zugferd' => 'zugferd/ZUGFeRD1p0.xsd',
     );
     const FACTURX_LOGO = array(
         'minimum' => 'Factur-x_minimum.jpg',
