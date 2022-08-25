@@ -217,7 +217,7 @@ class Facturx
         for ($i = 1; $i <= $pageCount; ++$i) {
             $tplIdx = $pdfWriter->importPage($i, '/MediaBox');
             $pdfWriter->AddPage();
-            $pdfWriter->useTemplate($tplIdx);
+            $pdfWriter->useTemplate($tplIdx, 0, 0, null, null, true);
             if (true == $addFacturxLogo && 1 == $i) { // add Factur-X logo on first page only
                 $pdfWriter->Image(__DIR__.'/../img/'.static::FACTURX_LOGO[$this->profil], 197, 2.5, 7);
             }
