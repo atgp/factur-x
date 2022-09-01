@@ -161,17 +161,19 @@ class FdpiFacturx extends \setasign\Fpdi\Fpdi
             $this->_put('/Subtype /'.$file_info['subtype']);
         }
         $this->_put('/Type /EmbeddedFile');
-        if (@is_file($file_info['file'])) {
+        if (is_string($file_info['file']) && @is_file($file_info['file'])) {
             $fc = file_get_contents($file_info['file']);
+            $md = @date('YmdHis', filemtime($file_info['file']));
         } else {
             $stream = $file_info['file']->getStream();
             \fseek($stream, 0);
             $fc = stream_get_contents($stream);
+            $md = @date('YmdHis');
         }
         if (false === $fc) {
             $this->Error('Cannot open file: '.$file_info['file']);
         }
-        $md = @date('YmdHis', filemtime($file_info['file']));
+
         $fc = gzcompress($fc);
         $this->_put('/Length '.strlen($fc));
         $this->_put("/Params <</ModDate (D:$md)>>");
