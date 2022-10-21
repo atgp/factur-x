@@ -168,22 +168,31 @@ class Facturx
     }
 
     /**
-     * Generate Factur-X PDF from PDF invoice and Factur-X XML.
-     *
-     * @param string $pdfInvoice            File name or content of the PDF invoice
-     * @param string $facturxXml            File name or content of the XML invoice
-     * @param string $facturxProfil         possible values : autodetect, minimum, basicwl, basic, en16931
-     * @param bool   $checkXsd              check Factur-X XML against official XSD
-     * @param string $outputFilePath        Output file path for PDF Factur-X, if empty, file string will be returned
-     * @param bool   $addFacturxLogo        Add Factur-X logo on PDF first page according to Factur-X profil
-     * @param mixed  $additionalAttachments
-     *
-     * @throws \Exception
-     *
-     * @return string
-     */
-    public function generateFacturxFromFiles($pdfInvoice, $facturxXml, $facturxProfil = 'autodetect', $checkXsd = true,
-                                             $outputFilePath = '', $additionalAttachments = array(), $addFacturxLogo = false)
+    * Generate Factur-X PDF from PDF invoice and Factur-X XML.
+    *
+    * @param string $pdfInvoice            File name or content of the PDF invoice
+    * @param string $facturxXml            File name or content of the XML invoice
+    * @param string $facturxProfil         possible values : autodetect, minimum, basicwl, basic, en16931
+    * @param bool   $checkXsd              check Factur-X XML against official XSD
+    * @param string $outputFilePath        Output file path for PDF Factur-X, if empty, file string will be returned
+    * @param bool   $addFacturxLogo        Add Factur-X logo on PDF first page according to Factur-X profil
+    * @param mixed  $additionalAttachments
+    * @param string $relationship          The embarkation relationship, must be Data|Source|Alternative.
+    *
+    * @throws \Exception
+    *
+    * @return string
+    */
+    public function generateFacturxFromFiles(
+        $pdfInvoice,
+        $facturxXml,
+        $facturxProfil = 'autodetect',
+        $checkXsd = true,
+        $outputFilePath = '',
+        $additionalAttachments = array(),
+        $addFacturxLogo = false,
+        $relationship = 'Data'
+    )
     {
         $pdfInvoiceRef = null;
         if (@is_file($pdfInvoice)) {
@@ -223,7 +232,10 @@ class Facturx
                 $pdfWriter->Image(__DIR__.'/../img/'.static::FACTURX_LOGO[$this->profil], 197, 2.5, 7);
             }
         }
-        $pdfWriter->Attach($facturxXmlRef, static::FACTURX_FILENAME, 'Factur-X Invoice', 'Data', 'text#2Fxml');
+        if (!in_array($relationship, ['Data', 'Source', 'Alternative'])) {
+            throw new \Exception('$relationship argument must be one of the values "Data", "Source", "Alternative".');
+        }
+        $pdfWriter->Attach($facturxXmlRef, static::FACTURX_FILENAME, 'Factur-X Invoice', $relationship, 'text#2Fxml');
         foreach ($additionalAttachments as $attachment) {
             if (@is_file($attachment['path'])) {
                 $attachment_file_ref = $attachment['path'];
