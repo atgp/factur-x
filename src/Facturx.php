@@ -136,14 +136,14 @@ class Facturx
             throw new \Exception('$facturxXml argument must be a file or a string');
         }
 
+        if ($facturxProfil === 'autodetect') {
+            $facturxProfil = $this->getFacturxProfil($doc);
+        }
+
         if (!array_key_exists($facturxProfil, static::FACTURX_PROFIL_TO_XSD)) {
-            $this->profil = $this->getFacturxProfil($doc);
-        } else {
-            $this->profil = $facturxProfil;
+            throw new \Exception("Wrong profil '$facturxProfil' for Factur-X invoice.");
         }
-        if (!array_key_exists($this->profil, static::FACTURX_PROFIL_TO_XSD)) {
-            throw new \Exception("Wrong profil '$this->profil' for Factur-X invoice.");
-        }
+        $this->profil = $facturxProfil;
         $xsdFilename = static::FACTURX_PROFIL_TO_XSD[$this->profil];
         $xsdFile = __DIR__.'/../xsd/'.$xsdFilename;
         try {
@@ -214,11 +214,9 @@ class Facturx
         }
         $docFacturx = new \DOMDocument();
         $docFacturx->loadXML($xmlString);
-        if (!array_key_exists(strtolower($facturxProfil), static::FACTURX_PROFIL_TO_XSD)) {
-            $facturxProfil = $this->getFacturxProfil($docFacturx);
-        }
-        $this->profil = $facturxProfil;
+
         if (true == $checkXsd) {
+            // The profil is validated inside checkFacturxXsd
             $this->checkFacturxXsd($facturxXml, $facturxProfil);
         }
 
