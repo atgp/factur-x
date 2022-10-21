@@ -19,11 +19,12 @@ class Facturx
     const FACTURX_ENCODING = 'UTF-8';
     const FACTURX_FILENAME = 'factur-x.xml';
     const FACTURX_PROFIL_TO_XSD = array(
-        'minimum' => 'FACTUR-X_BASIC-WL.xsd',
-        'basicwl' => 'FACTUR-X_BASIC-WL.xsd',
-        'basic' => 'FACTUR-X_EN16931.xsd',
-        'en16931' => 'FACTUR-X_EN16931.xsd',
-        'zugferd' => 'ZUGFeRD1p0.xsd',
+        'minimum' => 'factur-x/minimum/FACTUR-X_MINIMUM.xsd',
+        'basicwl' => 'factur-x/basic-wl/FACTUR-X_BASIC-WL.xsd',
+        'basic' => 'factur-x/basic/FACTUR-X_BASIC.xsd',
+        'en16931' => 'factur-x/en16931/FACTUR-X_EN16931.xsd',
+        'extended' => 'factur-x/extended/FACTUR-X_EXTENDED.xsd',
+        'zugferd' => 'zugferd/ZUGFeRD1p0.xsd',
     );
     const FACTURX_LOGO = array(
         'minimum' => 'Factur-x_minimum.jpg',
@@ -144,7 +145,7 @@ class Facturx
             throw new \Exception("Wrong profil '$this->profil' for Factur-X invoice.");
         }
         $xsdFilename = static::FACTURX_PROFIL_TO_XSD[$this->profil];
-        $xsdFile = __DIR__.'/../xsd/factur-x/'.$xsdFilename;
+        $xsdFile = __DIR__.'/../xsd/'.$xsdFilename;
         try {
             libxml_use_internal_errors(true);
             $schemaValidated = $doc->schemaValidate($xsdFile);
@@ -257,13 +258,13 @@ class Facturx
     public function getFacturxProfil(\DOMDocument $facturxXml)
     {
         if (!$facturxXml instanceof \DOMDocument) {
-            throw new \Exception('$facturxXml must be a SimpleXMLElement object');
+            throw new \Exception('$facturxXml must be a DOMDocument object');
         }
         $xpath = new \DOMXpath($facturxXml);
         $elements = $xpath->query('//rsm:ExchangedDocumentContext/ram:GuidelineSpecifiedDocumentContextParameter/ram:ID');
         if (0 == $elements->length) {
             throw new \Exception('This XML is not a Factur-X XML because it misses the XML
-                tag ExchangedDocumentContext/GuidelineSpecifiedDocumentContextParameter/ID.');
+                tag ExchangedDocumentContext/GuidelineSpecifiedDocumentContextParameter/ram:ID.');
         }
         $doc_id = $elements->item(0)->nodeValue;
         $doc_id_exploded = explode(':', $doc_id);
