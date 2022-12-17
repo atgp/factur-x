@@ -38,6 +38,7 @@ class Facturx
         'basicwl' => 'BASIC WL',
         'basic' => 'BASIC',
         'en16931' => 'EN 16931',
+        'extended' => 'EXTENDED',
     );
     const FACTURX_XMP = 'Factur-X_extension_schema.xmp';
 
