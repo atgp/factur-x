@@ -11,6 +11,8 @@
 
 namespace Atgp\FacturX\Fpdi;
 
+use UConverter;
+
 class FdpiFacturx extends \setasign\Fpdi\Fpdi
 {
     const ICC_PROFILE_PATH = __DIR__.'/icc/sRGB_v4_ICC_preference_displayclass.icc';
@@ -62,7 +64,7 @@ class FdpiFacturx extends \setasign\Fpdi\Fpdi
             }
         }
         if (!$isUTF8) {
-            $desc = utf8_encode($desc);
+            $desc = self::utf8_encode($desc);
         }
         if ('' == $mimetype) {
             $mimetype = mime_content_type($file);
@@ -130,7 +132,7 @@ class FdpiFacturx extends \setasign\Fpdi\Fpdi
         $this->_put('<<');
         $this->_put('/F ('.$this->_escape($file_info['name']).')');
         $this->_put('/Type /Filespec');
-        $this->_put('/UF '.$this->_textstring(utf8_encode($file_info['name'])));
+        $this->_put('/UF '.$this->_textstring(self::utf8_encode($file_info['name'])));
         if ($file_info['relationship']) {
             $this->_put('/AFRelationship /'.$file_info['relationship']);
         }
@@ -351,5 +353,53 @@ class FdpiFacturx extends \setasign\Fpdi\Fpdi
         }
 
         return $metadata_string;
+    }
+
+    /**
+     * Replacement for utf8_encode which is deprecated since PHP 8.2
+     *
+     * @param string $s
+     *
+     * @return string
+     */
+    public static function utf8_encode($s)
+    {
+        if (PHP_VERSION_ID < 80200)
+        {
+            return utf8_encode($s);
+        }
+
+        if (function_exists('mb_convert_encoding'))
+        {
+            return mb_convert_encoding($s, 'UTF-8', 'ISO-8859-1');
+        }
+
+        if (class_exists('UConverter'))
+        {
+            return UConverter::transcode($s, 'UTF8', 'ISO-8859-1');
+        }
+
+        if (function_exists('iconv'))
+        {
+            return iconv('ISO-8859-1', 'UTF-8', $s);
+        }
+
+        /**
+         * Fallback to the pure PHP implementation from Symfony Polyfill for PHP 7.2
+         *
+         * @see https://github.com/symfony/polyfill-php72/blob/v1.26.0/Php72.php
+         */
+        $s .= $s;
+        $len = \strlen($s);
+
+        for ($i = $len >> 1, $j = 0; $i < $len; ++$i, ++$j) {
+            switch (true) {
+                case $s[$i] < "\x80": $s[$j] = $s[$i]; break;
+                case $s[$i] < "\xC0": $s[$j] = "\xC2"; $s[++$j] = $s[$i]; break;
+                default: $s[$j] = "\xC3"; $s[++$j] = \chr(\ord($s[$i]) - 64); break;
+            }
+        }
+
+        return substr($s, 0, $j);
     }
 }
