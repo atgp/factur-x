@@ -11,6 +11,8 @@
 
 namespace Atgp\FacturX\Fpdi;
 
+use setasign\Fpdi\PdfParser\Type\PdfIndirectObject;
+use setasign\Fpdi\PdfParser\Type\PdfType;
 use UConverter;
 
 class FdpiFacturx extends \setasign\Fpdi\Fpdi
@@ -397,5 +399,17 @@ class FdpiFacturx extends \setasign\Fpdi\Fpdi
         }
 
         return substr($s, 0, $j);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function writePdfType(PdfType $value)
+    {
+        parent::writePdfType($value);
+
+        if ($value instanceof PdfIndirectObject && \PHP_EOL !== substr($this->buffer, -1)) {
+            $this->_put('');
+        }
     }
 }
