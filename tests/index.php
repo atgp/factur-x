@@ -35,7 +35,7 @@
                 } catch (Exception $e) {
                     $resultBodyHtml .= '<pre>Error while checking the XML :'.$e.'</pre>';
                 }
-                if ($result === true) {
+                if (true === $result) {
                     $resultHeaderClass = 'success';
                     $resultBodyHtml .= '<div class="alert alert-success">XML Factur-X valid.</div>';
                 } else {
@@ -46,25 +46,25 @@
                 $facturx = new \Atgp\FacturX\Facturx();
                 $resultHeaderHtml = 'Generate PDF Factur-X from PDF and Factur-X XML result';
                 try {
-                    if ($_POST['file_as_string'] == 'true') {
+                    if ('true' == $_POST['file_as_string']) {
                         $pdf = file_get_contents($_FILES['pdf_classic']['tmp_name']);
                         $facturx_xml = file_get_contents($_FILES['xml_facturx_tolink']['tmp_name']);
                     } else {
                         $pdf = $_FILES['pdf_classic']['tmp_name'];
                         $facturx_xml = $_FILES['xml_facturx_tolink']['tmp_name'];
                     }
-                    $attachment_files = array();
+                    $attachment_files = [];
                     if (!empty($_FILES['attachment']['tmp_name'])) {
-                        $attachment_files[] = array(
+                        $attachment_files[] = [
                             'name' => $_FILES['attachment']['name'],
                             'desc' => $_POST['attachment_desc'],
                             'path' => $_FILES['attachment']['tmp_name'],
-                        );
+                        ];
                     }
                     $result = $facturx->generateFacturxFromFiles($pdf, $facturx_xml,
                         'autodetect', true, __DIR__.'/', $attachment_files, true, $_POST['relationship']);
                 } catch (Exception $e) {
-                    $resultBodyHtml = 'Error while generating the Factur-X :<pre>' . $e.'</pre>';
+                    $resultBodyHtml = 'Error while generating the Factur-X :<pre>'.$e.'</pre>';
                 }
                 if (!empty($result)) {
                     $resultHeaderClass = 'success';
@@ -152,15 +152,15 @@
                             </form>
                         </div>
                     </div>
-                    <?php if (!empty($resultBodyHtml)){ ?>
+                    <?php if (!empty($resultBodyHtml)) { ?>
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="card">
-                                    <div class="card-header bg-<?php echo $resultHeaderClass ?> text-white">
-                                        <?php echo $resultHeaderHtml ?>
+                                    <div class="card-header bg-<?php echo $resultHeaderClass; ?> text-white">
+                                        <?php echo $resultHeaderHtml; ?>
                                     </div>
                                     <div class="card-body">
-                                        <?php echo $resultBodyHtml ?>
+                                        <?php echo $resultBodyHtml; ?>
                                     </div>
                                 </div>
                             </div>

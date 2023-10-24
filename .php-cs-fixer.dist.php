@@ -1,19 +1,24 @@
 <?php
 
-/**
- * Adapted from config file distributed on php-cs-fixer vendor.
- */
-return PhpCsFixer\Config::create()
-    ->setRules(array(
+$finder = (new PhpCsFixer\Finder())
+    ->in(['src/', 'tests/'])
+;
+
+return (new PhpCsFixer\Config())
+    ->setRules([
         '@Symfony' => true,
         '@Symfony:risky' => true,
-        'array_syntax' => array('syntax' => 'long'),
         'combine_consecutive_unsets' => true,
+        'no_superfluous_phpdoc_tags' => false,
+        'phpdoc_separation' => false,
+        'phpdoc_types_order' => false,
+        'native_function_invocation' => false,
+        'single_line_throw' => false,
         'heredoc_to_nowdoc' => true,
-        'no_extra_consecutive_blank_lines' => array(
+        'no_extra_blank_lines' => ['tokens' => [
             'break', 'continue', 'extra', 'return', 'throw', 'use',
             'parenthesis_brace_block', 'square_brace_block', 'curly_brace_block',
-        ),
+        ]],
         'no_unreachable_default_argument_value' => true,
         'no_useless_else' => true,
         'no_useless_return' => true,
@@ -21,10 +26,9 @@ return PhpCsFixer\Config::create()
         'ordered_imports' => true,
         'phpdoc_add_missing_param_annotation' => true,
         'phpdoc_order' => true,
-        'psr4' => true,
-    ))
+        'psr_autoloading' => true,
+        'visibility_required' => ['elements' => ['property', 'method']],
+    ])
     ->setRiskyAllowed(true)
-    ->setUsingCache(false)
-    // If we want to use cache for performance purposes, for now it's disabled
-    ->setCacheFile('app/cache/.php_cs.cache')
+    ->setFinder($finder)
 ;

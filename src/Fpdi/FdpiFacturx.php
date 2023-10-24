@@ -17,14 +17,14 @@ class FdpiFacturx extends \setasign\Fpdi\Fpdi
 {
     const ICC_PROFILE_PATH = __DIR__.'/icc/sRGB_v4_ICC_preference_displayclass.icc';
 
-    protected $files = array();
-    protected $metadata_descriptions = array();
+    protected $files = [];
+    protected $metadata_descriptions = [];
     protected $file_spe_dictionnary_index = 0;
     protected $description_index = 0;
     protected $output_intent_index = 0;
     protected $n_files;
     protected $open_attachment_pane = false;
-    protected $pdf_metadata_infos = array();
+    protected $pdf_metadata_infos = [];
 
     /**
      * Set the PDF version.
@@ -73,7 +73,7 @@ class FdpiFacturx extends \setasign\Fpdi\Fpdi
             }
         }
         $mimetype = str_replace('/', '#2F', $mimetype);
-        $this->files[] = array('file' => $file, 'name' => $name, 'desc' => $desc, 'relationship' => $relationship, 'subtype' => $mimetype);
+        $this->files[] = ['file' => $file, 'name' => $name, 'desc' => $desc, 'relationship' => $relationship, 'subtype' => $mimetype];
     }
 
     /**
@@ -356,35 +356,31 @@ class FdpiFacturx extends \setasign\Fpdi\Fpdi
     }
 
     /**
-     * Replacement for utf8_encode which is deprecated since PHP 8.2
+     * Replacement for utf8_encode which is deprecated since PHP 8.2.
      *
      * @param string $s
      *
      * @return string
      */
-    public static function utf8_encode($s)
+    protected static function utf8_encode($s)
     {
-        if (PHP_VERSION_ID < 80200)
-        {
+        if (\PHP_VERSION_ID < 80200) {
             return utf8_encode($s);
         }
 
-        if (function_exists('mb_convert_encoding'))
-        {
+        if (function_exists('mb_convert_encoding')) {
             return mb_convert_encoding($s, 'UTF-8', 'ISO-8859-1');
         }
 
-        if (class_exists('UConverter'))
-        {
+        if (class_exists('UConverter')) {
             return UConverter::transcode($s, 'UTF8', 'ISO-8859-1');
         }
 
-        if (function_exists('iconv'))
-        {
+        if (function_exists('iconv')) {
             return iconv('ISO-8859-1', 'UTF-8', $s);
         }
 
-        /**
+        /*
          * Fallback to the pure PHP implementation from Symfony Polyfill for PHP 7.2
          *
          * @see https://github.com/symfony/polyfill-php72/blob/v1.26.0/Php72.php
