@@ -15,7 +15,7 @@ use UConverter;
 
 class FdpiFacturx extends \setasign\Fpdi\Fpdi
 {
-    const ICC_PROFILE_PATH = __DIR__.'/icc/sRGB_v4_ICC_preference_displayclass.icc';
+    const ICC_PROFILE_PATH = __DIR__.'/icc/sRGB2014.icc';
 
     protected $files = [];
     protected $metadata_descriptions = [];
