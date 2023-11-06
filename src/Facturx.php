@@ -241,7 +241,7 @@ class Facturx
         $pdfWriter = new FdpiFacturx();
         $pageCount = $pdfWriter->setSourceFile($pdfInvoiceRef);
         for ($i = 1; $i <= $pageCount; ++$i) {
-            $tplIdx = $pdfWriter->importPage($i, '/MediaBox');
+            $tplIdx = $pdfWriter->importPage($i, '/MediaBox', $groupXObject = true, $importExternalLinks = true);
             $pdfWriter->AddPage();
             $pdfWriter->useTemplate($tplIdx, 0, 0, null, null, true);
             if (true == $addFacturxLogo && 1 == $i) { // add Factur-X logo on first page only
