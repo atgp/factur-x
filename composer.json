@@ -13,8 +13,8 @@
     "type": "library",
     "authors": [
         {
-            "name": "Lucas Gouy-Pailler",
-            "email": "lucas.gouypailler@atgp.net"
+            "name": "@GP",
+            "homepage": "https://www.atgp.net/"
         }
     ],
     "autoload": {
@@ -23,7 +23,7 @@
         }
     },
     "require": {
-        "php": ">=5.6",
+        "php": ">=7.4",
         "setasign/fpdf": "^1.8",
         "setasign/fpdi": "^2.0",
         "smalot/pdfparser": "^0.19.0",
