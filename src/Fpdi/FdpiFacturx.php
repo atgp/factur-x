@@ -3,8 +3,6 @@
 /*
  * This file is part of PHP Factur-X library.
  *
- * (c) Lucas Gouy-Pailler <lucas.gouypailler@atgp.net>
- *
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
  */
@@ -13,11 +11,10 @@ namespace Atgp\FacturX\Fpdi;
 
 use setasign\Fpdi\PdfParser\Type\PdfIndirectObject;
 use setasign\Fpdi\PdfParser\Type\PdfType;
-use UConverter;
 
 class FdpiFacturx extends \setasign\Fpdi\Fpdi
 {
-    const ICC_PROFILE_PATH = __DIR__.'/icc/sRGB2014.icc';
+    public const ICC_PROFILE_PATH = __DIR__.'/icc/sRGB2014.icc';
 
     protected $files = [];
     protected $metadata_descriptions = [];
@@ -45,7 +42,7 @@ class FdpiFacturx extends \setasign\Fpdi\Fpdi
     /**
      * Attach file to PDF.
      *
-     * @param $file
+     * @param        $file
      * @param string $name
      * @param string $desc
      * @param string $relationship
@@ -375,7 +372,7 @@ class FdpiFacturx extends \setasign\Fpdi\Fpdi
         }
 
         if (class_exists('UConverter')) {
-            return UConverter::transcode($s, 'UTF8', 'ISO-8859-1');
+            return \UConverter::transcode($s, 'UTF8', 'ISO-8859-1');
         }
 
         if (function_exists('iconv')) {
@@ -392,9 +389,14 @@ class FdpiFacturx extends \setasign\Fpdi\Fpdi
 
         for ($i = $len >> 1, $j = 0; $i < $len; ++$i, ++$j) {
             switch (true) {
-                case $s[$i] < "\x80": $s[$j] = $s[$i]; break;
-                case $s[$i] < "\xC0": $s[$j] = "\xC2"; $s[++$j] = $s[$i]; break;
-                default: $s[$j] = "\xC3"; $s[++$j] = \chr(\ord($s[$i]) - 64); break;
+                case $s[$i] < "\x80": $s[$j] = $s[$i];
+                    break;
+                case $s[$i] < "\xC0": $s[$j] = "\xC2";
+                    $s[++$j] = $s[$i];
+                    break;
+                default: $s[$j] = "\xC3";
+                    $s[++$j] = \chr(\ord($s[$i]) - 64);
+                    break;
             }
         }
 
