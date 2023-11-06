@@ -33,7 +33,14 @@ class Writer
     ];
     public const XML_FILENAME = 'Factur-X_extension_schema.xmp';
 
-    private ?string $profile = null;
+    protected ?string $profile = null;
+
+    protected bool $importExternalLinks = true;
+
+    public function __construct(bool $importExternalLinks = true)
+    {
+        $this->importExternalLinks = $importExternalLinks;
+    }
 
     /**
      * Generates Factur-X PDF from PDF invoice and Factur-X XML.
@@ -78,7 +85,7 @@ class Writer
         $pdfWriter = new FdpiFacturx();
         $pageCount = $pdfWriter->setSourceFile($pdfInvoiceRef);
         for ($i = 1; $i <= $pageCount; ++$i) {
-            $tplIdx = $pdfWriter->importPage($i, '/MediaBox');
+            $tplIdx = $pdfWriter->importPage($i, '/MediaBox', $groupXObject = true, $this->importExternalLinks);
             $pdfWriter->AddPage();
             $pdfWriter->useTemplate($tplIdx, 0, 0, null, null, true);
 
@@ -107,6 +114,26 @@ class Writer
         $this->updatePdfMetadata($pdfWriter, $docFacturx);
 
         return $pdfWriter->Output('S');
+    }
+
+    /**
+     * Returns used profile for export.
+     */
+    public function getProfile(): ?string
+    {
+        return $this->profile;
+    }
+
+    public function doesImportExternalLinks(): bool
+    {
+        return $this->importExternalLinks;
+    }
+
+    public function setImportExternalLinks(bool $importExternalLinks): self
+    {
+        $this->importExternalLinks = $importExternalLinks;
+
+        return $this;
     }
 
     /**
