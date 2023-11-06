@@ -1,79 +1,76 @@
+<?php
+include_once '../vendor/autoload.php';
+$resultHeaderClass = 'warning';
+$resultHeaderHtml = '';
+$resultBodyHtml = '';
+
+if (isset($_FILES['pdf_facturx_extract']) && !empty($_FILES['pdf_facturx_extract'])) {
+    $resultHeaderHtml = 'Extract Factur-X XML from PDF result';
+    $reader = new \Atgp\FacturX\Reader();
+    $resultBodyHtml .= "<h4 class='text-primary'>File ".$_FILES['pdf_facturx_extract']['name'].' : </h4>';
+    try {
+        $content = file_get_contents($_FILES['pdf_facturx_extract']['tmp_name']);
+        $result = $reader->extractXML($content, true);
+        $resultHeaderClass = 'success';
+        $doc = new DOMDocument('1.0');
+        $doc->preserveWhiteSpace = false;
+        $doc->formatOutput = true;
+        $doc->loadXML($result);
+        $resultBodyHtml .= '<pre lang="xml">'.htmlentities($doc->saveXML()).'</pre>';
+    } catch (Exception $e) {
+        $resultBodyHtml .= '<div class="alert alert-danger">'.$e.'</div>';
+    }
+}
+
+if (isset($_FILES['xml_facturx_check']) && !empty($_FILES['xml_facturx_check'])) {
+    $validator = new \Atgp\FacturX\XsdValidator();
+    $resultHeaderHtml = 'Check XML Factur-X result';
+    $resultBodyHtml = "<h4 class='text-primary'>File ".$_FILES['xml_facturx_check']['name'].' : </h4>';
+    $content = file_get_contents($_FILES['xml_facturx_check']['tmp_name']);
+
+    try {
+        if (!$validator->validate($content)) {
+            $resultBodyHtml .= '<div class="alert alert-warning">'.implode('<br />', $validator->getErrors()).'</div>';
+        } else {
+            $resultHeaderClass = 'success';
+            $resultBodyHtml .= '<div class="alert alert-success">XML Factur-X valid.</div>';
+        }
+    } catch (Exception $e) {
+        $resultBodyHtml .= '<pre>Error while checking the XML :'.$e.'</pre>';
+    }
+}
+
+if (isset($_FILES['pdf_classic']) && !empty($_FILES['pdf_classic'])) {
+    $writer = new \Atgp\FacturX\Writer();
+    $resultHeaderHtml = 'Generate PDF Factur-X from PDF and Factur-X XML result';
+    try {
+        $pdf = file_get_contents($_FILES['pdf_classic']['tmp_name']);
+        $xml = file_get_contents($_FILES['xml_facturx_tolink']['tmp_name']);
+        $attachment_files = [];
+        if (!empty($_FILES['attachment']['tmp_name'])) {
+            $attachment_files[] = [
+                'name' => $_FILES['attachment']['name'],
+                'desc' => $_POST['attachment_desc'],
+                'path' => $_FILES['attachment']['tmp_name'],
+            ];
+        }
+        $result = $writer->generate($pdf, $xml, null, true, $attachment_files, true, $_POST['relationship']);
+    } catch (Exception $e) {
+        $resultBodyHtml = 'Error while generating the Factur-X :<pre>'.$e.'</pre>';
+    }
+    if (!empty($result)) {
+        header('Content-disposition: attachment; filename="facturx.pdf"');
+        header('Content-Type: application/pdf');
+        header('Content-Length: '.strlen($result));
+        echo $result;
+        exit;
+    }
+    $resultBodyHtml = '<div class="alert alert-warning">Impossible to generate the Factur-X PDF file.</div>'.$resultBodyHtml;
+}
+?>
 <html lang="en">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
     <body>
-        <?php
-            include_once '../vendor/autoload.php';
-            $resultHeaderClass = 'warning';
-            $resultHeaderHtml = '';
-            $resultBodyHtml = '';
-            if ($_FILES['pdf_facturx_extract']) {
-                $resultHeaderHtml = 'Extract Factur-X XML from PDF result';
-                $facturx = new \Atgp\FacturX\Facturx();
-                $resultBodyHtml .= "<h4 class='text-primary'>File ".$_FILES['pdf_facturx_extract']['name'].' : </h4>';
-                try {
-                    $result = $facturx->getFacturxXmlFromPdf($_FILES['pdf_facturx_extract']['tmp_name'], true);
-                } catch (Exception $e) {
-                    $resultBodyHtml .= '<pre>Error while retrieving XML Factur-X :'.$e.'</pre>';
-                }
-                if (!$result) {
-                    $resultBodyHtml .= '<div class="alert alert-danger">No valid XML Factur-X found.</div>';
-                } else {
-                    $resultHeaderClass = 'success';
-                    $doc = new DomDocument('1.0');
-                    $doc->preserveWhiteSpace = false;
-                    $doc->formatOutput = true;
-                    $doc->loadXML($result);
-                    $resultBodyHtml .= '<pre lang="xml">'.htmlentities($doc->saveXML()).'</pre>';
-                }
-            }
-            if ($_FILES['xml_facturx_check']) {
-                $facturx = new \Atgp\FacturX\Facturx();
-                $resultHeaderHtml = 'Check XML Factur-X result';
-                $resultBodyHtml = "<h4 class='text-primary'>File ".$_FILES['xml_facturx_check']['name'].' : </h4>';
-                try {
-                    $result = $facturx->checkFacturxXsd($_FILES['xml_facturx_check']['tmp_name']);
-                } catch (Exception $e) {
-                    $resultBodyHtml .= '<pre>Error while checking the XML :'.$e.'</pre>';
-                }
-                if (true === $result) {
-                    $resultHeaderClass = 'success';
-                    $resultBodyHtml .= '<div class="alert alert-success">XML Factur-X valid.</div>';
-                } else {
-                    $resultBodyHtml .= '<div class="alert alert-warning">XML Factur-X invalid.</div>';
-                }
-            }
-            if ($_FILES['pdf_classic'] && $_FILES['xml_facturx_tolink']) {
-                $facturx = new \Atgp\FacturX\Facturx();
-                $resultHeaderHtml = 'Generate PDF Factur-X from PDF and Factur-X XML result';
-                try {
-                    if ('true' == $_POST['file_as_string']) {
-                        $pdf = file_get_contents($_FILES['pdf_classic']['tmp_name']);
-                        $facturx_xml = file_get_contents($_FILES['xml_facturx_tolink']['tmp_name']);
-                    } else {
-                        $pdf = $_FILES['pdf_classic']['tmp_name'];
-                        $facturx_xml = $_FILES['xml_facturx_tolink']['tmp_name'];
-                    }
-                    $attachment_files = [];
-                    if (!empty($_FILES['attachment']['tmp_name'])) {
-                        $attachment_files[] = [
-                            'name' => $_FILES['attachment']['name'],
-                            'desc' => $_POST['attachment_desc'],
-                            'path' => $_FILES['attachment']['tmp_name'],
-                        ];
-                    }
-                    $result = $facturx->generateFacturxFromFiles($pdf, $facturx_xml,
-                        'autodetect', true, __DIR__.'/', $attachment_files, true, $_POST['relationship']);
-                } catch (Exception $e) {
-                    $resultBodyHtml = 'Error while generating the Factur-X :<pre>'.$e.'</pre>';
-                }
-                if (!empty($result)) {
-                    $resultHeaderClass = 'success';
-                    $resultBodyHtml = '<div class="alert alert-success">Factur-X PDF file successfully generated.</div>';
-                } else {
-                    $resultBodyHtml = '<div class="alert alert-warning">Impossible to generate the Factur-X PDF file.</div>'.$resultBodyHtml;
-                }
-            }
-        ?>
         <div class="container-fluid">
             <div class="card">
                 <div class="card-header bg-info text-white">
