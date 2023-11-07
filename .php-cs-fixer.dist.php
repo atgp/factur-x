@@ -27,7 +27,6 @@ return (new PhpCsFixer\Config())
         'phpdoc_add_missing_param_annotation' => true,
         'phpdoc_order' => true,
         'psr_autoloading' => true,
-        'visibility_required' => ['elements' => ['property', 'method']],
     ])
     ->setRiskyAllowed(true)
     ->setFinder($finder)
