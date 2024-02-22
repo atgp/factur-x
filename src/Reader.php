@@ -13,6 +13,9 @@ class Reader
 {
     public const FACTURX_FILENAME = 'factur-x.xml';
 
+    public array $smalotPdfParserCfg = [];
+    public ?\Smalot\PdfParser\Config $smalotPdfParserConfig = null;
+
     /**
      * Extracts Factur-X XML from Factur-X PDF.
      *
@@ -28,7 +31,7 @@ class Reader
         $xml = false;
 
         try {
-            $parser = new \Smalot\PdfParser\Parser();
+            $parser = new \Smalot\PdfParser\Parser($this->smalotPdfParserCfg, $this->smalotPdfParserConfig);
             $pdfParsed = $parser->parseContent($pdfBinary);
             $found = false;
             $filespec = $pdfParsed->getObjectsByType('Filespec');
