@@ -174,10 +174,10 @@ class FdpiFacturx extends \setasign\Fpdi\Fpdi
         if (false === $fc) {
             $this->Error('Cannot open file: '.$file_info['file']);
         }
-
+        $size = strlen($fc);
         $fc = gzcompress($fc);
         $this->_put('/Length '.strlen($fc));
-        $this->_put("/Params <</ModDate (D:$md)>>");
+        $this->_put("/Params <</ModDate (D:$md) /Size $size >>");
         $this->_put('>>');
         $this->_putstream($fc);
         $this->_put('endobj');
