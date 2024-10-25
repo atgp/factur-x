@@ -14,11 +14,11 @@ use Atgp\FacturX\Utils\ProfileHandler;
 class XsdValidator
 {
     public const XSD_FILENAMES = [
-        ProfileHandler::PROFILE_FACTURX_MINIMUM => 'factur-x/minimum/FACTUR-X_MINIMUM.xsd',
-        ProfileHandler::PROFILE_FACTURX_BASICWL => 'factur-x/basic-wl/FACTUR-X_BASIC-WL.xsd',
-        ProfileHandler::PROFILE_FACTURX_BASIC => 'factur-x/basic/FACTUR-X_BASIC.xsd',
-        ProfileHandler::PROFILE_FACTURX_EN16931 => 'factur-x/en16931/FACTUR-X_EN16931.xsd',
-        ProfileHandler::PROFILE_FACTURX_EXTENDED => 'factur-x/extended/FACTUR-X_EXTENDED.xsd',
+        ProfileHandler::PROFILE_FACTURX_MINIMUM => 'factur-x/minimum/Factur-X_1.0.07_MINIMUM.xsd',
+        ProfileHandler::PROFILE_FACTURX_BASICWL => 'factur-x/basic-wl/Factur-X_1.0.07_BASICWL.xsd',
+        ProfileHandler::PROFILE_FACTURX_BASIC => 'factur-x/basic/Factur-X_1.0.07_BASIC.xsd',
+        ProfileHandler::PROFILE_FACTURX_EN16931 => 'factur-x/en16931/Factur-X_1.0.07_EN16931.xsd',
+        ProfileHandler::PROFILE_FACTURX_EXTENDED => 'factur-x/extended/Factur-X_1.0.07_EXTENDED.xsd',
         ProfileHandler::PROFILE_ZUGFERD => 'zugferd/ZUGFeRD1p0.xsd',
     ];
 

@@ -13,6 +13,8 @@ class Reader
 {
     public const FACTURX_FILENAME = 'factur-x.xml';
 
+    public const ALLOWED_FILENAMES = ['factur-x.xml', 'zugferd-invoice.xml'];
+
     public array $smalotPdfParserCfg = [];
     public ?\Smalot\PdfParser\Config $smalotPdfParserConfig = null;
 
@@ -23,7 +25,6 @@ class Reader
      * @param bool   $validateXsd validates Factur-X XML against official XSD and throws exception if validation failed
      *
      * @throws \Exception
-     *
      * @return string
      */
     public function extractXML(string $pdfBinary, bool $validateXsd = true): string
@@ -38,7 +39,7 @@ class Reader
             $facturxLength = null;
             foreach ($filespec as $spec) {
                 $specDetails = $spec->getDetails();
-                if (static::FACTURX_FILENAME == $specDetails['F']) {
+                if (in_array($specDetails['F'], static::ALLOWED_FILENAMES)) {
                     $found = true;
                     if (!empty($specDetails['EF']) && isset($specDetails['EF']['F']) && isset($specDetails['EF']['F']['Length'])) {
                         $facturxLength = $specDetails['EF']['F']['Length']; // Get file size
