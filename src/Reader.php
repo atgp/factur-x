@@ -9,11 +9,14 @@
 
 namespace Atgp\FacturX;
 
+use Smalot\PdfParser\PDFObject;
+
 class Reader
 {
     public const FACTURX_FILENAME = 'factur-x.xml';
+    public const ZUGFERD_FILENAME = 'zugferd-invoice.xml';
 
-    public const ALLOWED_FILENAMES = ['factur-x.xml', 'zugferd-invoice.xml'];
+    public const ALLOWED_FILENAMES = [self::FACTURX_FILENAME, self::ZUGFERD_FILENAME];
 
     public array $smalotPdfParserCfg = [];
     public ?\Smalot\PdfParser\Config $smalotPdfParserConfig = null;
@@ -21,47 +24,43 @@ class Reader
     /**
      * Extracts Factur-X XML from Factur-X PDF.
      *
-     * @param string $pdfBinary   content of the PDF invoice
-     * @param bool   $validateXsd validates Factur-X XML against official XSD and throws exception if validation failed
+     * @param string   $pdfBinary        content of the PDF invoice
+     * @param bool     $validateXsd      validates Factur-X XML against official XSD and throws exception if validation failed
+     * @param string[] $allowedFilenames by default searchs zugferd and factur-x filenames
      *
      * @throws \Exception
      * @return string
      */
-    public function extractXML(string $pdfBinary, bool $validateXsd = true): string
+    public function extractXML(string $pdfBinary, bool $validateXsd = true, array $allowedFilenames = self::ALLOWED_FILENAMES): string
     {
-        $xml = false;
-
         try {
             $parser = new \Smalot\PdfParser\Parser($this->smalotPdfParserCfg, $this->smalotPdfParserConfig);
             $pdfParsed = $parser->parseContent($pdfBinary);
-            $found = false;
-            $filespec = $pdfParsed->getObjectsByType('Filespec');
-            $facturxLength = null;
-            foreach ($filespec as $spec) {
-                $specDetails = $spec->getDetails();
-                if (in_array($specDetails['F'], static::ALLOWED_FILENAMES)) {
-                    $found = true;
-                    if (!empty($specDetails['EF']) && isset($specDetails['EF']['F']) && isset($specDetails['EF']['F']['Length'])) {
-                        $facturxLength = $specDetails['EF']['F']['Length']; // Get file size
-                    }
-                    break;
-                }
-            }
-            if (!$found) {
-                throw new \RuntimeException('Factur-x Filespec not found.');
-            }
 
-            $embeddedFiles = $pdfParsed->getObjectsByType('EmbeddedFile');
-            foreach ($embeddedFiles as $embedFile) {
-                $embedDetails = $embedFile->getDetails();
-                // looking for file with same file length as found before, if empty length, take first EmbeddedFile
-                if ($embedDetails['Length'] == $facturxLength || null == $facturxLength) {
-                    $xml = $embedFile->getContent();
+            /** @var PDFObject $spec */
+            $xml = null;
+            foreach ($pdfParsed->getObjectsByType('Filespec') as $spec) {
+                if (!in_array($spec->get('F')->getContent(), $allowedFilenames)) {
+                    continue;
+                }
+                // Not an embedded file
+                if (!$spec->has('EF')) {
+                    continue;
+                }
+                $embeddedFileReference = $spec->get('EF');
+                if (!$embeddedFileReference->has('F')) {
+                    // /EF /F contains reference to /EmbeddedFile object
+                    // (raw reference is not displayable with Smalot)
+                    continue;
+                }
+                // Smalot resolve embedded stream content directly (without need to search /EmbeddedFile by reference)
+                if (null === $xml = $embeddedFileReference->get('F')->getContent()) {
+                    throw new \RuntimeException('EmbeddedFile not readable.');
                 }
             }
 
             if (!$xml) {
-                throw new \RuntimeException('EmbeddedFile not found.');
+                throw new \RuntimeException('Factur-x Filespec not found.');
             }
         } catch (\Exception $e) {
             throw new \Exception('Unable to get Factur-X Xml from PDF : '.$e);
