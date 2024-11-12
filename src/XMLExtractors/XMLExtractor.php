@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Atgp\FacturX\XMLExtractors;
 
 use Atgp\FacturX\Exceptions\UnableToExtractXMLException;
@@ -13,7 +12,7 @@ abstract class XMLExtractor
     abstract public function extract(string $pdfPathOrContent, array $searchFilenames): string;
 
     /**
-     * Check if the given parameter is a PDF file or PDF string
+     * Check if the given parameter is a PDF file or PDF string.
      */
     public function isPdf(string $pdfPathOrContent): bool
     {
@@ -33,6 +32,6 @@ abstract class XMLExtractor
             @unlink($filePath);
         }
 
-        return $mimeType === 'application/pdf';
+        return 'application/pdf' === $mimeType;
     }
 }

@@ -37,7 +37,7 @@ class XsdValidator
      *
      * @return bool
      */
-    public function validate(string $xml, string $profile = null): bool
+    public function validate(string $xml, ?string $profile = null): bool
     {
         $this->errors = [];
         $this->profile = $profile;
@@ -50,6 +50,7 @@ class XsdValidator
         }
         if (!ProfileHandler::has($this->profile)) {
             $this->errors[] = "Unexpected profile '$profile' for Factur-X invoice.";
+
             return false;
         }
 
@@ -69,8 +70,9 @@ class XsdValidator
 
             return true;
         } catch (\Exception $e) {
-            $this->errors[] = 'The ' . strtoupper($this->profile) .
-                ' XML file is not valid against the official XML Schema Definition : ' . $e->getMessage();
+            $this->errors[] = 'The '.strtoupper($this->profile).
+                ' XML file is not valid against the official XML Schema Definition : '.$e->getMessage();
+
             return false;
         }
     }
@@ -80,10 +82,10 @@ class XsdValidator
      *
      * @throws \Exception
      */
-    public function validateWithException(string $xml, string $profile = null)
+    public function validateWithException(string $xml, ?string $profile = null)
     {
         if (!$this->validate($xml, $profile)) {
-            throw new \Exception(strtoupper($this->profile) . ' XML file invalid schema : ' . implode(\PHP_EOL, $this->errors));
+            throw new \Exception(strtoupper($this->profile).' XML file invalid schema : '.implode(\PHP_EOL, $this->errors));
         }
     }
 
@@ -108,7 +110,7 @@ class XsdValidator
     protected static function getXsd(string $profile): string
     {
         if (!array_key_exists($profile, static::XSD_FILENAMES)) {
-            throw new \Exception('No available XSD for profile ' . $profile);
+            throw new \Exception('No available XSD for profile '.$profile);
         }
 
         return sprintf('%s/../xsd/%s', __DIR__, static::XSD_FILENAMES[$profile]);

@@ -56,7 +56,7 @@ class Writer
      * @throws \Exception
      * @return string
      */
-    public function generate(string $pdfInvoice, string $xml, string $profile = null, bool $validateXSD = true,
+    public function generate(string $pdfInvoice, string $xml, ?string $profile = null, bool $validateXSD = true,
         array $additionalAttachments = [], bool $addLogo = false, string $relationship = 'Data'
     ): string {
         $pdfInvoiceRef = \setasign\Fpdi\PdfParser\StreamReader::createByString($pdfInvoice);

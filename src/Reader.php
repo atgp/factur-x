@@ -10,10 +10,9 @@
 namespace Atgp\FacturX;
 
 use Atgp\FacturX\Exceptions\UnableToExtractXMLException;
-use Atgp\FacturX\XMLExtractors\XMLExtractor;
 use Atgp\FacturX\XMLExtractors\PdfParserExtractor;
+use Atgp\FacturX\XMLExtractors\XMLExtractor;
 use Exception;
-use InvalidArgumentException;
 
 class Reader
 {
@@ -31,15 +30,14 @@ class Reader
     /**
      * Extracts Factur-X XML from Factur-X PDF.
      *
-     * @param string         $pdfContentOrPath  content or path of the PDF invoice
-     * @param bool           $validateXsd       validates Factur-X XML against official XSD and throws exception if validation failed
-     * @param ?array<string> $searchFilenames   XML filenames to look for, by default searchs zugferd and factur-x filenames, must be a valid factur-x XML filename
-     *
-     * @return string the extracted XML
+     * @param string         $pdfContentOrPath content or path of the PDF invoice
+     * @param bool           $validateXsd      validates Factur-X XML against official XSD and throws exception if validation failed
+     * @param ?array<string> $searchFilenames  XML filenames to look for, by default searchs zugferd and factur-x filenames, must be a valid factur-x XML filename
      *
      * @throws UnableToExtractXMLException
-     * @throws Exception
-     * @throws InvalidArgumentException
+     * @throws \Exception
+     * @throws \InvalidArgumentException
+     * @return string                      the extracted XML
      */
     public function extractXML(
         string $pdfContentOrPath,
@@ -50,14 +48,14 @@ class Reader
         $xmlExtractor = $this->getXMLExtractor();
 
         if (!$xmlExtractor->isPdf($pdfContentOrPath)) {
-            throw new InvalidArgumentException('The $pdfContentOrPath must be content or path of a PDF file.');
+            throw new \InvalidArgumentException('The $pdfContentOrPath must be content or path of a PDF file.');
         }
 
         try {
             $xml = $this->getXMLExtractor()
                 ->extract($pdfContentOrPath, $searchFilenames ?? self::ALLOWED_FILENAMES);
-        } catch (Exception $e) {
-            throw new UnableToExtractXMLException('Unable to get Factur-x XML from PDF : ' . $e->getMessage());
+        } catch (\Exception $e) {
+            throw new UnableToExtractXMLException('Unable to get Factur-x XML from PDF : '.$e->getMessage());
         }
 
         if ($validateXsd) {
@@ -69,12 +67,12 @@ class Reader
     }
 
     /**
-     * @throws InvalidArgumentException
+     * @throws \InvalidArgumentException
      */
     private function checkXMLFilenamesAreValid(?array $searchFilenames = null): void
     {
         if ($searchFilenames && count(array_diff($searchFilenames, self::ALLOWED_FILENAMES))) {
-            throw new InvalidArgumentException('Invalid parameter $searchFilenames, only valid factur-x XML filenames are allowed :' . implode(', ', self::ALLOWED_FILENAMES));
+            throw new \InvalidArgumentException('Invalid parameter $searchFilenames, only valid factur-x XML filenames are allowed :'.implode(', ', self::ALLOWED_FILENAMES));
         }
     }
 

@@ -6,7 +6,7 @@ $resultBodyHtml = '';
 
 if (isset($_FILES['pdf_facturx_extract']) && !empty($_FILES['pdf_facturx_extract'])) {
     $resultHeaderHtml = 'Extract Factur-X XML from PDF result';
-    $reader = new \Atgp\FacturX\Reader();
+    $reader = new Atgp\FacturX\Reader();
     $resultBodyHtml .= "<h4 class='text-primary'>File ".$_FILES['pdf_facturx_extract']['name'].' : </h4>';
     try {
         $content = file_get_contents($_FILES['pdf_facturx_extract']['tmp_name']);
@@ -23,7 +23,7 @@ if (isset($_FILES['pdf_facturx_extract']) && !empty($_FILES['pdf_facturx_extract
 }
 
 if (isset($_FILES['xml_facturx_check']) && !empty($_FILES['xml_facturx_check'])) {
-    $validator = new \Atgp\FacturX\XsdValidator();
+    $validator = new Atgp\FacturX\XsdValidator();
     $resultHeaderHtml = 'Check XML Factur-X result';
     $resultBodyHtml = "<h4 class='text-primary'>File ".$_FILES['xml_facturx_check']['name'].' : </h4>';
     $content = file_get_contents($_FILES['xml_facturx_check']['tmp_name']);
@@ -41,7 +41,7 @@ if (isset($_FILES['xml_facturx_check']) && !empty($_FILES['xml_facturx_check']))
 }
 
 if (isset($_FILES['pdf_classic']) && !empty($_FILES['pdf_classic'])) {
-    $writer = new \Atgp\FacturX\Writer();
+    $writer = new Atgp\FacturX\Writer();
     $resultHeaderHtml = 'Generate PDF Factur-X from PDF and Factur-X XML result';
     try {
         $pdf = file_get_contents($_FILES['pdf_classic']['tmp_name']);

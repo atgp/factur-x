@@ -3,13 +3,11 @@
 namespace Atgp\FacturX\XMLExtractors;
 
 use Atgp\FacturX\Exceptions\UnableToExtractXMLException;
-use Atgp\FacturX\XMLExtractors\XMLExtractor;
-use Exception;
 
 class PdfDetachExtractor extends XMLExtractor
 {
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function extract(string $pdfPathOrContent, array $searchFilenames): string
     {
@@ -22,7 +20,7 @@ class PdfDetachExtractor extends XMLExtractor
 
             $xmlAttachmentIndex = self::getXMLAttachmentIndex($pdfPathOrContent, $searchFilenames);
 
-            $xml =  self::getAttachmentContent(
+            $xml = self::getAttachmentContent(
                 $pdfPathOrContent,
                 $xmlAttachmentIndex,
             );
@@ -32,7 +30,7 @@ class PdfDetachExtractor extends XMLExtractor
             }
 
             return $xml;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             throw new UnableToExtractXMLException($e->getMessage());
         }
     }
@@ -46,11 +44,11 @@ class PdfDetachExtractor extends XMLExtractor
 
         exec("pdfdetach -list {$pdfPath}", $output, $resultCode);
 
-        if ($resultCode !== 0) {
+        if (0 !== $resultCode) {
             throw new UnableToExtractXMLException((string) $output);
         }
 
-        /**
+        /*
          * Example output :
          * 1 embedded files
          * 1: factur-x.xml
@@ -81,7 +79,7 @@ class PdfDetachExtractor extends XMLExtractor
             $resultCode
         );
 
-        if ($resultCode !== 0) {
+        if (0 !== $resultCode) {
             throw new UnableToExtractXMLException((string) $output);
         }
 

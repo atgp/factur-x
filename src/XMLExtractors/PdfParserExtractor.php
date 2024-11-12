@@ -3,8 +3,6 @@
 namespace Atgp\FacturX\XMLExtractors;
 
 use Atgp\FacturX\Exceptions\UnableToExtractXMLException;
-use Atgp\FacturX\XMLExtractors\XMLExtractor;
-use Exception;
 use Smalot\PdfParser\Parser;
 
 class PdfParserExtractor extends XMLExtractor
@@ -19,7 +17,7 @@ class PdfParserExtractor extends XMLExtractor
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function extract(string $pdfPathOrContent, array $searchFilenames): string
     {
@@ -57,7 +55,7 @@ class PdfParserExtractor extends XMLExtractor
             if (!$xml) {
                 throw new UnableToExtractXMLException('Factur-x Filespec not found.');
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             throw new UnableToExtractXMLException($e->getMessage());
         }
 
