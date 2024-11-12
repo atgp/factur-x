@@ -1,13 +1,13 @@
 PHP Factur-X library
 ------------------
 
-Factur-X is a Franco-German e-invoicing standard which complies with the European e-invoicing standard [EN 16931](https://ec.europa.eu/digital-building-blocks/wikis/display/DIGITAL/Obtaining+a+copy+of+the+European+standard+on+eInvoicing). 
-The Factur-X specifications are available on the [FNFE-MPE](http://fnfe-mpe.org/factur-x/) website in English and French. 
+Factur-X is a Franco-German e-invoicing standard which complies with the European e-invoicing standard [EN 16931](https://ec.europa.eu/digital-building-blocks/wikis/display/DIGITAL/Obtaining+a+copy+of+the+European+standard+on+eInvoicing).
+The Factur-X specifications are available on the [FNFE-MPE](http://fnfe-mpe.org/factur-x/) website in English and French.
 The Factur-X standard is also called [ZUGFeRD 2.2](https://www.ferd-net.de/standards/zugferd-2.2/zugferd-2.2.html) in Germany.
 
 This library enable you to manage your Factur-X PDF invoices files :
 * **Generate Factur-X PDF invoice** from regular PDF invoice and Factur-X XML file
-* **Extract Factur-X XML** from Factur-X PDF invoice 
+* **Extract Factur-X XML** from Factur-X PDF invoice
 * **Validate Factur-X XML** against the official Factur-X XML Schema Definition
 
 Table of contents:
@@ -49,17 +49,65 @@ You can see the code from test page from "tests" directory, also here some simpl
 $writer = new \Atgp\FacturX\Writer();
 $facturxPdf = $writer->generate($pdf, $facturxXml);
 
-// Extracts Factur-X XML
+// Extracts Factur-X XML, the extractXML method accepts a PDF path or PDF file content
 $reader = new \Atgp\FacturX\Reader();
 $facturxXml = $reader->extractXML($facturxPdf);
 
-// Validates Factur-X XML against official Factur-X XML Schema Definition 
+// Configure smalot/pdfparser
+$config = new \Smalot\PdfParser\Config();
+$pdfParserExtractor = new \Atgp\FacturX\XMLExtractors\PdfParserExtractor([], $config);
+$reader = new \Atgp\FacturX\Reader($pdfParserExtractor);
+$facturxXml = $reader->extractXML($facturxPdf);
+
+// Validates Factur-X XML against official Factur-X XML Schema Definition
 $validator = new \Atgp\FacturX\XsdValidator();
 if (false === ($isValid = $validator->validate($facturxXml)) {
     var_dump($validator->getErrors());
 }
 // ... or throw exceptions if error(s) are occurred
 $validator->validateWithException($facturxXml);
+```
+
+Extract XML using `pdfdetach` command, make you sure you have [poppler-utils](https://packages.debian.org/en/sid/poppler-utils) installed :
+
+```php
+<?php
+// Include or autoload (with Composer) all library classes
+
+// Extracts Factur-X XML using pdfdetach
+$pdfDetachExtractor = new \Atgp\FacturX\XMLExtractors\PdfDetachExtractor();
+$reader = new \Atgp\FacturX\Reader($pdfDetachExtractor);
+$facturxXml = $reader->extractXML($facturxPdf);
+```
+
+You may also want to implement your own XML extraction strategy :
+
+```php
+class CustomExtractor extends XMLExtractor
+{
+    private string $param1;
+    private string $param2;
+
+    public function __construct(string $param1, string $param2, ...)
+    {
+        $this->param1 = $param1;
+        $this->param2 = $param2;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function extract(string $pdfPathOrContent, array $searchFilenames): string
+    {
+        // extract XML and return it
+        // throw UnableToExtractXMLException if unable to extract any XML file from $searchFilenames
+    }
+}
+
+// You may than pass your extract to the Reader class
+$myCustomExtractor = new CustomExtractor('param1');
+$reader = new \Atgp\FacturX\Reader($myCustomExtractor);
+$facturxXml = $reader->extractXML($facturxPdf);
 ```
 
 More options are available, look at source code for more information.
