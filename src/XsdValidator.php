@@ -25,11 +25,6 @@ class XsdValidator
     protected ?string $profile = null;
 
     /**
-     * @var \LibXMLError[]
-     */
-    protected array $xmlErrors = [];
-
-    /**
      * @var string[]
      */
     protected array $errors = [];
@@ -40,13 +35,11 @@ class XsdValidator
      * @param string      $xml     XML invoice content
      * @param string|null $profile One of \Atgp\FacturX\XsdValidator::XSD_FILENAMES keys (null for auto-detection)
      *
-     * @throws \Exception if validation is not possible
-     *
      * @return bool
      */
     public function validate(string $xml, string $profile = null): bool
     {
-        $this->xmlErrors = $this->errors = [];
+        $this->errors = [];
         $this->profile = $profile;
 
         $doc = new \DOMDocument();
@@ -56,15 +49,16 @@ class XsdValidator
             $this->profile = ProfileHandler::get($doc);
         }
         if (!ProfileHandler::has($this->profile)) {
-            throw new \Exception("Unexpected profile '$profile' for Factur-X invoice.");
+            $this->errors[] = "Unexpected profile '$profile' for Factur-X invoice.";
+            return false;
         }
 
         $xsd = static::getXsd($this->profile);
         try {
             libxml_use_internal_errors(true);
             if (!$doc->schemaValidate($xsd)) {
-                $this->xmlErrors = libxml_get_errors();
-                foreach ($this->xmlErrors as $xmlError) {
+                $xmlErrors = libxml_get_errors();
+                foreach ($xmlErrors as $xmlError) {
                     $this->errors[] = sprintf('[line %d] %s : %s', $xmlError->line, $xmlError->code, $xmlError->message);
                 }
                 libxml_clear_errors();
@@ -75,8 +69,9 @@ class XsdValidator
 
             return true;
         } catch (\Exception $e) {
-            throw new \Exception('The '.strtoupper($this->profile)." XML file is not valid against the official
-            XML Schema Definition : $e.");
+            $this->errors[] = 'The ' . strtoupper($this->profile) .
+                ' XML file is not valid against the official XML Schema Definition : ' . $e->getMessage();
+            return false;
         }
     }
 
@@ -88,7 +83,7 @@ class XsdValidator
     public function validateWithException(string $xml, string $profile = null)
     {
         if (!$this->validate($xml, $profile)) {
-            throw new \Exception(strtoupper($this->profile).' XML file invalid schema : '.implode(\PHP_EOL, $this->errors));
+            throw new \Exception(strtoupper($this->profile) . ' XML file invalid schema : ' . implode(\PHP_EOL, $this->errors));
         }
     }
 
@@ -103,14 +98,6 @@ class XsdValidator
     }
 
     /**
-     * @return \LibXMLError[]
-     */
-    public function getXmlErrors(): array
-    {
-        return $this->xmlErrors;
-    }
-
-    /**
      * @return string[]
      */
     public function getErrors(): array
@@ -121,7 +108,7 @@ class XsdValidator
     protected static function getXsd(string $profile): string
     {
         if (!array_key_exists($profile, static::XSD_FILENAMES)) {
-            throw new \Exception('No available XSD for profile '.$profile);
+            throw new \Exception('No available XSD for profile ' . $profile);
         }
 
         return sprintf('%s/../xsd/%s', __DIR__, static::XSD_FILENAMES[$profile]);

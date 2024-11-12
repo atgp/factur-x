@@ -9,61 +9,55 @@
 
 namespace Atgp\FacturX;
 
-use Smalot\PdfParser\PDFObject;
+use Atgp\FacturX\Exceptions\UnableToExtractXMLException;
+use Atgp\FacturX\XMLExtractors\XMLExtractor;
+use Atgp\FacturX\XMLExtractors\PdfParserExtractor;
+use Exception;
+use InvalidArgumentException;
 
 class Reader
 {
     public const FACTURX_FILENAME = 'factur-x.xml';
     public const ZUGFERD_FILENAME = 'zugferd-invoice.xml';
-
     public const ALLOWED_FILENAMES = [self::FACTURX_FILENAME, self::ZUGFERD_FILENAME];
 
-    public array $smalotPdfParserCfg = [];
-    public ?\Smalot\PdfParser\Config $smalotPdfParserConfig = null;
+    private ?XMLExtractor $xmlExtractor = null;
+
+    public function __construct(?XMLExtractor $xmlExtractor = null)
+    {
+        $this->xmlExtractor = $xmlExtractor;
+    }
 
     /**
      * Extracts Factur-X XML from Factur-X PDF.
      *
-     * @param string   $pdfBinary        content of the PDF invoice
-     * @param bool     $validateXsd      validates Factur-X XML against official XSD and throws exception if validation failed
-     * @param string[] $allowedFilenames by default searchs zugferd and factur-x filenames
+     * @param string         $pdfContentOrPath  content or path of the PDF invoice
+     * @param bool           $validateXsd       validates Factur-X XML against official XSD and throws exception if validation failed
+     * @param ?array<string> $searchFilenames   XML filenames to look for, by default searchs zugferd and factur-x filenames, must be a valid factur-x XML filename
      *
-     * @throws \Exception
-     * @return string
+     * @return string the extracted XML
+     *
+     * @throws UnableToExtractXMLException
+     * @throws Exception
+     * @throws InvalidArgumentException
      */
-    public function extractXML(string $pdfBinary, bool $validateXsd = true, array $allowedFilenames = self::ALLOWED_FILENAMES): string
-    {
+    public function extractXML(
+        string $pdfContentOrPath,
+        bool $validateXsd = true,
+        ?array $searchFilenames = null
+    ): string {
+        $this->checkXMLFilenamesAreValid($searchFilenames);
+        $xmlExtractor = $this->getXMLExtractor();
+
+        if (!$xmlExtractor->isPdf($pdfContentOrPath)) {
+            throw new InvalidArgumentException('The $pdfContentOrPath must be content or path of a PDF file.');
+        }
+
         try {
-            $parser = new \Smalot\PdfParser\Parser($this->smalotPdfParserCfg, $this->smalotPdfParserConfig);
-            $pdfParsed = $parser->parseContent($pdfBinary);
-
-            /** @var PDFObject $spec */
-            $xml = null;
-            foreach ($pdfParsed->getObjectsByType('Filespec') as $spec) {
-                if (!in_array($spec->get('F')->getContent(), $allowedFilenames)) {
-                    continue;
-                }
-                // Not an embedded file
-                if (!$spec->has('EF')) {
-                    continue;
-                }
-                $embeddedFileReference = $spec->get('EF');
-                if (!$embeddedFileReference->has('F')) {
-                    // /EF /F contains reference to /EmbeddedFile object
-                    // (raw reference is not displayable with Smalot)
-                    continue;
-                }
-                // Smalot resolve embedded stream content directly (without need to search /EmbeddedFile by reference)
-                if (null === $xml = $embeddedFileReference->get('F')->getContent()) {
-                    throw new \RuntimeException('EmbeddedFile not readable.');
-                }
-            }
-
-            if (!$xml) {
-                throw new \RuntimeException('Factur-x Filespec not found.');
-            }
-        } catch (\Exception $e) {
-            throw new \Exception('Unable to get Factur-X Xml from PDF : '.$e);
+            $xml = $this->getXMLExtractor()
+                ->extract($pdfContentOrPath, $searchFilenames ?? self::ALLOWED_FILENAMES);
+        } catch (Exception $e) {
+            throw new UnableToExtractXMLException('Unable to get Factur-x XML from PDF : ' . $e->getMessage());
         }
 
         if ($validateXsd) {
@@ -72,5 +66,25 @@ class Reader
         }
 
         return $xml;
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    private function checkXMLFilenamesAreValid(?array $searchFilenames = null): void
+    {
+        if ($searchFilenames && count(array_diff($searchFilenames, self::ALLOWED_FILENAMES))) {
+            throw new InvalidArgumentException('Invalid parameter $searchFilenames, only valid factur-x XML filenames are allowed :' . implode(', ', self::ALLOWED_FILENAMES));
+        }
+    }
+
+    private function getXMLExtractor(): XMLExtractor
+    {
+        return $this->xmlExtractor ?? new PdfParserExtractor();
+    }
+
+    private function setXMLExtractor(XMLExtractor $xmlExtractor): void
+    {
+        $this->xmlExtractor = $xmlExtractor;
     }
 }
