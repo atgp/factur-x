@@ -7,8 +7,11 @@ The Factur-X standard is also called [ZUGFeRD 2.2](https://www.ferd-net.de/stand
 
 This library enable you to manage your Factur-X PDF invoices files :
 * **Generate Factur-X PDF invoice** from regular PDF invoice and Factur-X XML file
-* **Extract Factur-X XML** from Factur-X PDF invoice 
+    * Using [setasign\Fpdi](https://github.com/Setasign/FPDI) 
+* **Extract Factur-X XML** from Factur-X PDF invoice
+    * Using [Smalot\PdfParser](https://github.com/smalot/pdfparser)
 * **Validate Factur-X XML** against the official Factur-X XML Schema Definition
+    * Using PHP native libxml functions
 
 Table of contents:
 ------------------
