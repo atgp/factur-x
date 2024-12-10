@@ -10,7 +10,7 @@ permissions:
 jobs:
     test:
         strategy:
-            max-parallel: 1
+            max-parallel: 3
             matrix:
                 php:
                     - '7.4'
