@@ -1,0 +1,12 @@
+includes:
+    - phar://phpstan.phar/conf/bleedingEdge.neon
+
+parameters:
+    level: 1
+    treatPhpDocTypesAsCertain: false
+
+    paths:
+        - src
+
+    bootstrapFiles:
+        - vendor/autoload.php
