@@ -44,7 +44,7 @@ class XsdValidator
      *
      * @return bool
      */
-    public function validate(string $xml, string $profile = null): bool
+    public function validate(string $xml, ?string $profile = null): bool
     {
         $this->xmlErrors = $this->errors = [];
         $this->profile = $profile;
@@ -85,7 +85,7 @@ class XsdValidator
      *
      * @throws \Exception
      */
-    public function validateWithException(string $xml, string $profile = null)
+    public function validateWithException(string $xml, ?string $profile = null): void
     {
         if (!$this->validate($xml, $profile)) {
             throw new \Exception(strtoupper($this->profile).' XML file invalid schema : '.implode(\PHP_EOL, $this->errors));

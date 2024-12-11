@@ -1,0 +1,41 @@
+name: CI
+
+on:
+    - pull_request
+    - push
+
+permissions:
+    contents: read # to fetch code (actions/checkout)
+
+jobs:
+    test:
+        strategy:
+            max-parallel: 3
+            matrix:
+                php:
+                    - '7.4'
+                    - '8.0'
+                    - '8.1'
+                    - '8.2'
+                    - '8.3'
+                    - '8.4'
+
+        runs-on: ubuntu-24.04
+
+        steps:
+            -   name: Setup PHP
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: ${{ matrix.php }}
+                    extensions: zip
+
+            -   uses: actions/checkout@v4
+
+            -   name: Install dependencies
+                run: composer install --no-ansi --no-interaction --no-progress --prefer-dist
+
+            -   name: Check all PHP files Syntax
+                run: find src -type f -name "*.php" -exec php -l {} \; || exit 1
+
+            -   name: PHPStan
+                run: vendor/bin/phpstan analyse -vv
