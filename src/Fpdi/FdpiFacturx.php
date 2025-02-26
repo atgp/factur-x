@@ -26,17 +26,14 @@ class FdpiFacturx extends \setasign\Fpdi\Fpdi
     protected $pdf_metadata_infos = [];
 
     /**
-     * Set the PDF version.
-     *
-     * @param string $version
-     * @param bool   $binary_data
+     * Does this PDF file contains binary data.
      */
-    public function SetPdfVersion($version = '1.3', $binary_data = false)
+    protected bool $containsBinaryData = false;
+
+    public function SetPdfVersion(string $version = '1.3', bool $containsBinaryData = false)
     {
         $this->PDFVersion = sprintf('%.1F', $version);
-        if (true == $binary_data) {
-            $this->PDFVersion .= "\n".'%'.chr(rand(128, 256)).chr(rand(128, 256)).chr(rand(128, 256)).chr(rand(128, 256));
-        }
+        $this->containsBinaryData = $containsBinaryData;
     }
 
     /**
@@ -101,6 +98,17 @@ class FdpiFacturx extends \setasign\Fpdi\Fpdi
     public function set_pdf_metadata_infos(array $pdf_metadata_infos)
     {
         $this->pdf_metadata_infos = $pdf_metadata_infos;
+    }
+
+    protected function _putheader()
+    {
+        parent::_putheader();
+
+        // ISO 32000-1:2008, Section 7.5.2 (File Header) : If a PDF file contains binary data,
+        // the header line shall be immediately followed by a comment line containing at least four binary characters...
+        if ($this->containsBinaryData) {
+            $this->_put('%'.chr(rand(128, 255)).chr(rand(128, 255)).chr(rand(128, 255)).chr(rand(128, 255)));
+        }
     }
 
     /**
