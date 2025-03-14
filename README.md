@@ -74,6 +74,16 @@ This project is licensed under MIT License
 Changelog
 ---------
 
+- v2.3.1 : 2025-03-14
+  - (writer) Fix binary content indicator in header
+- v2.3.0 : 2024-12-11
+  - (ci) Add Github CI : php-stan for PHP versions between 7.4 and 8.4
+- v2.2.1 : 2024-10-28
+  - (reader) Clarify reader extraction method
+- v2.2.0 : 2024-10-28
+  - (validator) Upgrade Factur-x XSD to v1.0.7 
+- v2.1.0 : 2024-02-26
+  - (reader) Allow to configure Smalot pdf parser
 - v2.0.0 [BC] : 2023-11-06
   - Requires php 7.4+
   - Refactor classes to clarify uses
