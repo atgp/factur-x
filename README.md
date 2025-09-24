@@ -3,7 +3,7 @@ PHP Factur-X library
 
 Factur-X is a Franco-German e-invoicing standard which complies with the European e-invoicing standard [EN 16931](https://ec.europa.eu/digital-building-blocks/wikis/display/DIGITAL/Obtaining+a+copy+of+the+European+standard+on+eInvoicing). 
 The Factur-X specifications are available on the [FNFE-MPE](http://fnfe-mpe.org/factur-x/) website in English and French. 
-The Factur-X standard is also called [ZUGFeRD 2.2](https://www.ferd-net.de/standards/zugferd-2.2/zugferd-2.2.html) in Germany.
+The Factur-X standard is also called [ZUGFeRD](https://www.ferd-net.de/download-zugferd) in Germany.
 
 This library enable you to manage your Factur-X PDF invoices files :
 * **Generate Factur-X PDF invoice** from regular PDF invoice and Factur-X XML file
@@ -74,6 +74,8 @@ This project is licensed under MIT License
 Changelog
 ---------
 
+- v2.4.0 : 2025-09-24
+  - (validator) Upgrade Factur-x XSD to v1.07.3
 - v2.3.1 : 2025-03-14
   - (writer) Fix binary content indicator in header
 - v2.3.0 : 2024-12-11
