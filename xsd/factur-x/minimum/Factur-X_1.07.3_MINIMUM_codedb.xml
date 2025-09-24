@@ -2,6 +2,7 @@
 <codedb>
   <cl id="1">
     <enumeration value="urn:factur-x.eu:1p0:minimum"/>
+    <enumeration value="urn:zugferd.de:2p0:minimum"/>
   </cl>
   <cl id="2">
     <enumeration value="71"/>
@@ -289,6 +290,16 @@
     <enumeration value="0228"/>
     <enumeration value="0229"/>
     <enumeration value="0230"/>
+    <enumeration value="0231"/>
+    <enumeration value="0232"/>
+    <enumeration value="0233"/>
+    <enumeration value="0234"/>
+    <enumeration value="0235"/>
+    <enumeration value="0236"/>
+    <enumeration value="0237"/>
+    <enumeration value="0238"/>
+    <enumeration value="0239"/>
+    <enumeration value="0240"/>
   </cl>
   <cl id="5">
     <enumeration value="AD"/>
@@ -581,7 +592,6 @@
     <enumeration value="COP"/>
     <enumeration value="COU"/>
     <enumeration value="CRC"/>
-    <enumeration value="CUC"/>
     <enumeration value="CUP"/>
     <enumeration value="CVE"/>
     <enumeration value="CZK"/>
@@ -605,7 +615,6 @@
     <enumeration value="GYD"/>
     <enumeration value="HKD"/>
     <enumeration value="HNL"/>
-    <enumeration value="HRK"/>
     <enumeration value="HTG"/>
     <enumeration value="HUF"/>
     <enumeration value="IDR"/>
@@ -698,6 +707,7 @@
     <enumeration value="UYU"/>
     <enumeration value="UYW"/>
     <enumeration value="UZS"/>
+    <enumeration value="VED"/>
     <enumeration value="VES"/>
     <enumeration value="VND"/>
     <enumeration value="VUV"/>
@@ -722,7 +732,7 @@
     <enumeration value="YER"/>
     <enumeration value="ZAR"/>
     <enumeration value="ZMW"/>
-    <enumeration value="ZWL"/>
+    <enumeration value="ZWG"/>
   </cl>
   <cl id="7">
     <enumeration value="AED"/>
@@ -762,7 +772,6 @@
     <enumeration value="COP"/>
     <enumeration value="COU"/>
     <enumeration value="CRC"/>
-    <enumeration value="CUC"/>
     <enumeration value="CUP"/>
     <enumeration value="CVE"/>
     <enumeration value="CZK"/>
@@ -786,7 +795,6 @@
     <enumeration value="GYD"/>
     <enumeration value="HKD"/>
     <enumeration value="HNL"/>
-    <enumeration value="HRK"/>
     <enumeration value="HTG"/>
     <enumeration value="HUF"/>
     <enumeration value="IDR"/>
@@ -879,6 +887,7 @@
     <enumeration value="UYU"/>
     <enumeration value="UYW"/>
     <enumeration value="UZS"/>
+    <enumeration value="VED"/>
     <enumeration value="VES"/>
     <enumeration value="VND"/>
     <enumeration value="VUV"/>
@@ -903,6 +912,6 @@
     <enumeration value="YER"/>
     <enumeration value="ZAR"/>
     <enumeration value="ZMW"/>
-    <enumeration value="ZWL"/>
+    <enumeration value="ZWG"/>
   </cl>
 </codedb>
