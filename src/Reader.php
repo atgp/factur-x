@@ -63,7 +63,7 @@ class Reader
                 throw new \RuntimeException('Factur-x Filespec not found.');
             }
         } catch (\Exception $e) {
-            throw new \Exception('Unable to get Factur-X Xml from PDF : '.$e);
+            throw new \Exception('Unable to get Factur-X Xml from PDF : '.$e->getMessage(), 0, $e);
         }
 
         if ($validateXsd) {
