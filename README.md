@@ -74,6 +74,8 @@ This project is licensed under MIT License
 Changelog
 ---------
 
+- v2.4.1 : 2025-11-18
+  - (reader) Remove backtrace from thrown exception message
 - v2.4.0 : 2025-09-24
   - (validator) Upgrade Factur-x XSD to v1.07.3
 - v2.3.1 : 2025-03-14
