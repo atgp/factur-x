@@ -32,6 +32,21 @@ class Writer
         ProfileHandler::PROFILE_FACTURX_EXTENDED => 'EXTENDED',
     ];
     public const XML_FILENAME = 'Factur-X_extension_schema.xmp';
+    private const CREDIT_NOTE_TYPES = [
+        '81', // Credit note related to goods or services
+        '83', // Credit note related to financial adjustments
+        '261', // Self-billed credit note
+        '262', // Consolidated credit note - goods and services
+        '296', // Credit note for price variation
+        '308', // Delcredere credit note
+        '381', // Credit note
+        '396', // Factored credit note
+        '420', // Optical Character Reading (OCR) payment credit note
+        '458', // Reversal of credit
+        '502', // Self-billed factored Credit Note, Credit note type, Corrected
+        '503', // Prepayment credit note, credit note type, Corrected
+        '532', // Forwarder's credit note
+    ];
 
     protected ?string $profile = null;
 
@@ -228,15 +243,9 @@ class Writer
         $seller = $sellerXpath->item(0)->nodeValue;
         $docTypeXpath = $xpath->query('//rsm:ExchangedDocument/ram:TypeCode');
         $docType = $docTypeXpath->item(0)->nodeValue;
-        switch ($docType) {
-            case '381':
-            case '261':
-                $docTypeName = 'Credit note';
-                break;
-            default:
-                $docTypeName = 'Invoice';
-                break;
-        }
+        $docTypeName = in_array($docType, self::CREDIT_NOTE_TYPES, true)
+            ? 'Credit note'
+            : 'Invoice';
 
         return [
             'invoiceId' => $invoiceId,
