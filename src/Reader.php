@@ -9,6 +9,11 @@
 
 namespace Atgp\FacturX;
 
+use Atgp\FacturX\Exceptions\ExceptionInterface;
+use Atgp\FacturX\Exceptions\Reader\EmbeddedFileNotReadableException;
+use Atgp\FacturX\Exceptions\Reader\FilespecNotFoundException;
+use Atgp\FacturX\Exceptions\Reader\InvalidXmlException;
+use Atgp\FacturX\Exceptions\Reader\ReaderExceptionInterface;
 use Smalot\PdfParser\PDFObject;
 
 class Reader
@@ -28,7 +33,8 @@ class Reader
      * @param bool     $validateXsd      validates Factur-X XML against official XSD and throws exception if validation failed
      * @param string[] $allowedFilenames by default searchs zugferd and factur-x filenames
      *
-     * @throws \Exception
+     * @throws ReaderExceptionInterface
+     * @throws ExceptionInterface
      * @return string
      */
     public function extractXML(string $pdfBinary, bool $validateXsd = true, array $allowedFilenames = self::ALLOWED_FILENAMES): string
@@ -55,15 +61,17 @@ class Reader
                 }
                 // Smalot resolve embedded stream content directly (without need to search /EmbeddedFile by reference)
                 if (null === $xml = $embeddedFileReference->get('F')->getContent()) {
-                    throw new \RuntimeException('EmbeddedFile not readable.');
+                    throw new EmbeddedFileNotReadableException('EmbeddedFile not readable.');
                 }
             }
 
             if (!$xml) {
-                throw new \RuntimeException('Factur-x Filespec not found.');
+                throw new FilespecNotFoundException('Factur-x Filespec not found.');
             }
-        } catch (\Exception $e) {
-            throw new \Exception('Unable to get Factur-X Xml from PDF : '.$e->getMessage(), 0, $e);
+        } catch (ExceptionInterface $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            throw new InvalidXmlException('Unable to get Factur-X Xml from PDF : '.$e->getMessage(), 0, $e);
         }
 
         if ($validateXsd) {
