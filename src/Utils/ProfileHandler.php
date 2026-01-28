@@ -2,6 +2,8 @@
 
 namespace Atgp\FacturX\Utils;
 
+use Atgp\FacturX\Utils\Exception\ProfileResolutionException;
+
 class ProfileHandler
 {
     public const PROFILE_FACTURX_MINIMUM = 'minimum';
@@ -20,12 +22,15 @@ class ProfileHandler
         self::PROFILE_ZUGFERD,
     ];
 
+    /**
+     * @throws ProfileResolutionException
+     */
     public static function get(\DOMDocument $document): string
     {
         $xpath = new \DOMXPath($document);
         $elements = $xpath->query('//rsm:ExchangedDocumentContext/ram:GuidelineSpecifiedDocumentContextParameter/ram:ID');
         if (0 == $elements->length) {
-            throw new \Exception(
+            throw new ProfileResolutionException(
                 'This XML is not a Factur-X XML because it misses the XML '.
                 'tag ExchangedDocumentContext/GuidelineSpecifiedDocumentContextParameter/ram:ID.');
         }
@@ -36,7 +41,7 @@ class ProfileHandler
             $profile = $doc_id_exploded[count($doc_id_exploded) - 2];
         }
         if (!static::has(strtolower($profile))) {
-            throw new \Exception('Invalid Factur-X URN : '.$doc_id);
+            throw new ProfileResolutionException('Invalid Factur-X URN : '.$doc_id);
         }
 
         return $profile;

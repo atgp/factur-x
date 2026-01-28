@@ -9,7 +9,13 @@
 
 namespace Atgp\FacturX;
 
+use Atgp\FacturX\Exceptions\Writer\InvalidAttachmentException;
+use Atgp\FacturX\Exceptions\Writer\InvalidProfileException;
+use Atgp\FacturX\Exceptions\Writer\InvalidRelationshipException;
+use Atgp\FacturX\Exceptions\Writer\WriterExceptionInterface;
+use Atgp\FacturX\Exceptions\XsdValidator\XsdValidatorExceptionInterface;
 use Atgp\FacturX\Fpdi\FdpiFacturx;
+use Atgp\FacturX\Utils\Exception\ProfileResolutionException;
 use Atgp\FacturX\Utils\ProfileHandler;
 
 class Writer
@@ -68,7 +74,11 @@ class Writer
      * @param mixed       $additionalAttachments
      * @param string      $relationship          the embarkation relationship, must be Data|Source|Alternative
      *
-     * @throws \Exception
+     * @throws WriterExceptionInterface
+     * @throws XsdValidatorExceptionInterface
+     * @throws \setasign\Fpdi\PdfParser\PdfParserException
+     * @throws \setasign\Fpdi\PdfReader\PdfReaderException
+     *
      * @return string
      */
     public function generate(string $pdfInvoice, string $xml, ?string $profile = null, bool $validateXSD = true,
@@ -86,10 +96,14 @@ class Writer
 
         $this->profile = $profile;
         if (null === $this->profile) {
-            $this->profile = ProfileHandler::get($docFacturx);
+            try {
+                $this->profile = ProfileHandler::get($docFacturx);
+            } catch (ProfileResolutionException $e) {
+                throw new InvalidProfileException($e->getMessage(), $e->getCode(), $e);
+            }
         }
         if (!ProfileHandler::has($this->profile)) {
-            throw new \Exception("Unexpected profile '$profile' for Factur-X invoice.");
+            throw new InvalidProfileException("Unexpected profile '$profile' for Factur-X invoice.");
         }
 
         if ($validateXSD) {
@@ -110,7 +124,7 @@ class Writer
             }
         }
         if (!in_array($relationship, ['Data', 'Source', 'Alternative'])) {
-            throw new \Exception('$relationship argument must be one of the values "Data", "Source", "Alternative".');
+            throw new InvalidRelationshipException('$relationship argument must be one of the values "Data", "Source", "Alternative".');
         }
         $pdfWriter->Attach($facturxXmlRef, Reader::FACTURX_FILENAME, 'Factur-X Invoice', $relationship, 'text#2Fxml');
         foreach ($additionalAttachments as $attachment) {
@@ -120,7 +134,7 @@ class Writer
                 $attachment_file_ref = sys_get_temp_dir().'/'.$attachment['name'];
                 file_put_contents($attachment_file_ref, $attachment['path']); // creating tmp file to solve mime_content_type errors
             } else {
-                throw new \Exception('$attachment_file argument must be a string or a file');
+                throw new InvalidAttachmentException('$attachment_file argument must be a string or a file');
             }
             $pdfWriter->Attach($attachment_file_ref, $attachment['name'], $attachment['desc']);
         }
