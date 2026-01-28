@@ -22,6 +22,7 @@ return (new PhpCsFixer\Config())
         'no_unreachable_default_argument_value' => true,
         'no_useless_else' => true,
         'no_useless_return' => true,
+        'nullable_type_declaration_for_default_null_value' => false,
         'ordered_class_elements' => true,
         'ordered_imports' => true,
         'phpdoc_add_missing_param_annotation' => true,
