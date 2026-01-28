@@ -74,6 +74,8 @@ This project is licensed under MIT License
 Changelog
 ---------
 
+- v3.0.0 : 2026-01-28
+    - (reader/validator/writer) Throw custom exception to facilitate exception handling
 - v2.5.0 : 2026-01-09
     - (validator) Upgrade Factur-x XSD to v1.08 — Applicable from 15 January 2026
     - (validator) Handle all codes that can be used for credit notes
