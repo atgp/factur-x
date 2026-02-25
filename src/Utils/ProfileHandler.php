@@ -47,18 +47,6 @@ class ProfileHandler
         return $profile;
     }
 
-    /**
-     * @param string $xml XML content
-     *
-     * @throws \Exception
-     *
-     * @return string
-     */
-    public static function getFromXml(string $xml): string
-    {
-        return static::get(new \DOMDocument($xml));
-    }
-
     public static function has(string $profile): bool
     {
         return in_array($profile, static::PROFILES);
