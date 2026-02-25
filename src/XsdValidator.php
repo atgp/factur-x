@@ -10,6 +10,7 @@
 namespace Atgp\FacturX;
 
 use Atgp\FacturX\Exceptions\XsdValidator\InvalidProfileException;
+use Atgp\FacturX\Exceptions\XsdValidator\InvalidXmlException;
 use Atgp\FacturX\Exceptions\XsdValidator\XsdValidationFailureException;
 use Atgp\FacturX\Exceptions\XsdValidator\XsdValidatorExceptionInterface;
 use Atgp\FacturX\Utils\Exception\ProfileResolutionException;
@@ -53,7 +54,9 @@ class XsdValidator
         $this->profile = $profile;
 
         $doc = new \DOMDocument();
-        $doc->loadXML($xml);
+        if (!$doc->loadXML($xml)) {
+            throw new InvalidXmlException('Unable to parse XML.');
+        }
 
         if (null === $this->profile) {
             try {

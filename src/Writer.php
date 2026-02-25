@@ -12,6 +12,7 @@ namespace Atgp\FacturX;
 use Atgp\FacturX\Exceptions\Writer\InvalidAttachmentException;
 use Atgp\FacturX\Exceptions\Writer\InvalidProfileException;
 use Atgp\FacturX\Exceptions\Writer\InvalidRelationshipException;
+use Atgp\FacturX\Exceptions\Writer\InvalidXmlException;
 use Atgp\FacturX\Exceptions\Writer\WriterExceptionInterface;
 use Atgp\FacturX\Exceptions\XsdValidator\XsdValidatorExceptionInterface;
 use Atgp\FacturX\Fpdi\FdpiFacturx;
@@ -92,7 +93,9 @@ class Writer
         $facturxXmlRef = \setasign\Fpdi\PdfParser\StreamReader::createByString($xml);
 
         $docFacturx = new \DOMDocument();
-        $docFacturx->loadXML($xml);
+        if (!$docFacturx->loadXML($xml)) {
+            throw new InvalidXmlException('Unable to parse Factur-X XML.');
+        }
 
         $this->profile = $profile;
         if (null === $this->profile) {
@@ -248,15 +251,12 @@ class Writer
     protected function extractInvoiceInformations(\DOMDocument $document): array
     {
         $xpath = new \DOMXPath($document);
-        $dateXpath = $xpath->query('//rsm:ExchangedDocument/ram:IssueDateTime/udt:DateTimeString');
-        $date = $dateXpath->item(0)->nodeValue;
+
+        $date = $this->queryXpathValue($xpath, '//rsm:ExchangedDocument/ram:IssueDateTime/udt:DateTimeString');
         $dateReformatted = date('Y-m-d\TH:i:s', strtotime($date)).'+00:00';
-        $invoiceIdXpath = $xpath->query('//rsm:ExchangedDocument/ram:ID');
-        $invoiceId = $invoiceIdXpath->item(0)->nodeValue;
-        $sellerXpath = $xpath->query('//ram:ApplicableHeaderTradeAgreement/ram:SellerTradeParty/ram:Name');
-        $seller = $sellerXpath->item(0)->nodeValue;
-        $docTypeXpath = $xpath->query('//rsm:ExchangedDocument/ram:TypeCode');
-        $docType = $docTypeXpath->item(0)->nodeValue;
+        $invoiceId = $this->queryXpathValue($xpath, '//rsm:ExchangedDocument/ram:ID');
+        $seller = $this->queryXpathValue($xpath, '//ram:ApplicableHeaderTradeAgreement/ram:SellerTradeParty/ram:Name');
+        $docType = $this->queryXpathValue($xpath, '//rsm:ExchangedDocument/ram:TypeCode');
         $docTypeName = in_array($docType, self::CREDIT_NOTE_TYPES, true)
             ? 'Credit note'
             : 'Invoice';
@@ -267,5 +267,15 @@ class Writer
             'seller' => $seller,
             'date' => $dateReformatted,
         ];
+    }
+
+    private function queryXpathValue(\DOMXPath $xpath, string $expression): string
+    {
+        $elements = $xpath->query($expression);
+        if (false === $elements || 0 === $elements->length) {
+            throw new InvalidXmlException(sprintf('Missing XML element for XPath expression: %s', $expression));
+        }
+
+        return $elements->item(0)->nodeValue;
     }
 }
