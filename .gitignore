@@ -2,4 +2,13 @@
 /composer.lock
 .idea
 
+#PHP cs-fixer
 .php-cs-fixer.cache
+
+# PHPUnit
+.phpunit.result.cache
+phpunit.xml
+
+# Claude Code file/folder
+CLAUDE.md
+.claude

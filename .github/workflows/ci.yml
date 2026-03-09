@@ -27,7 +27,7 @@ jobs:
                 uses: shivammathur/setup-php@v2
                 with:
                     php-version: ${{ matrix.php }}
-                    extensions: zip
+                    extensions: zip, mbstring
 
             -   uses: actions/checkout@v4
 
@@ -39,3 +39,6 @@ jobs:
 
             -   name: PHPStan
                 run: vendor/bin/phpstan analyse -vv
+
+            -   name: Run tests
+                run: vendor/bin/phpunit --colors=always
