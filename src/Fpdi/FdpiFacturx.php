@@ -201,7 +201,7 @@ class FdpiFacturx extends \setasign\Fpdi\Fpdi
         $this->_put('<<');
         $s = '';
         $files = $this->files;
-        usort($files, function ($a, $b) { // Sorting files in name order as PDF specs (if not, issue with Acrobat Reader when trying to download attachments)
+        usort($files, static function ($a, $b) { // Sorting files in name order as PDF specs (if not, issue with Acrobat Reader when trying to download attachments)
             return strcmp($a['name'], $b['name']);
         });
         foreach ($files as $info) {
