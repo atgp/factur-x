@@ -74,6 +74,8 @@ This project is licensed under MIT License
 Changelog
 ---------
 
+- v3.2.0 : 2026-03-12
+    - Cover library with automatic tests
 - v3.1.0 : 2026-02-25
     - (reader/validator/writer) Handle invalid XML
     - (utils) Remove useless ProfileHandler::getFromXml() method
