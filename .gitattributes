@@ -6,4 +6,3 @@
 /phpstan.dist.neon export-ignore
 /phpunit.xml.dist export-ignore
 /tests export-ignore
-/img export-ignore
