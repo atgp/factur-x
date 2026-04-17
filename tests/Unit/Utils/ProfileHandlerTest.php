@@ -27,7 +27,7 @@ class ProfileHandlerTest extends TestCase
             'minimum' => ['urn:factur-x.eu:1p0:minimum', 'minimum'],
             'basicwl' => ['urn:factur-x.eu:1p0:basicwl', 'basicwl'],
             'basic' => ['urn:factur-x.eu:1p0:basic', 'basic'],
-            'en16931' => ['urn:cen.eu:en16931:2017#compliant#urn:factur-x.eu:1p0:en16931', 'en16931'],
+            'en16931' => ['urn:cen.eu:en16931:2017', 'en16931'],
             'extended' => ['urn:factur-x.eu:1p0:extended', 'extended'],
             'second-to-last segment' => ['urn:factur-x.eu:1p0:extended:comfort', 'extended'],
         ];

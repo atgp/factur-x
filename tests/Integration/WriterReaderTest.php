@@ -223,7 +223,7 @@ class WriterReaderTest extends TestCase
             'minimum' => [$fixturesDir.'/facturx-minimum.xml', 'minimum', 'urn:factur-x.eu:1p0:minimum'],
             'basicwl' => [$fixturesDir.'/facturx-basicwl.xml', 'basicwl', 'urn:factur-x.eu:1p0:basicwl'],
             'basic' => [$fixturesDir.'/facturx-basic.xml', 'basic', 'urn:factur-x.eu:1p0:basic'],
-            'en16931' => [$fixturesDir.'/facturx-en16931.xml', 'en16931', 'urn:cen.eu:en16931:2017#compliant#urn:factur-x.eu:1p0:en16931'],
+            'en16931' => [$fixturesDir.'/facturx-en16931.xml', 'en16931', 'urn:cen.eu:en16931:2017'],
             'extended' => [$fixturesDir.'/facturx-extended.xml', 'extended', 'urn:factur-x.eu:1p0:extended'],
         ];
     }
