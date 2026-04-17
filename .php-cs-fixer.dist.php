@@ -28,6 +28,7 @@ return (new PhpCsFixer\Config())
         'phpdoc_add_missing_param_annotation' => true,
         'phpdoc_order' => true,
         'psr_autoloading' => true,
+        'trailing_comma_in_multiline' => ['elements' => ['arrays']],
     ])
     ->setRiskyAllowed(true)
     ->setFinder($finder)
