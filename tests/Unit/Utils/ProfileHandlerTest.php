@@ -33,6 +33,28 @@ class ProfileHandlerTest extends TestCase
         ];
     }
 
+    public function testGetReturnsProfileWithAliasedNamespaces(): void
+    {
+        // Real-world emitters use arbitrary namespace prefixes (ns1, ns2, ...)
+        // and a default namespace for CrossIndustryInvoice instead of rsm/ram.
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>'
+            .'<CrossIndustryInvoice '
+            .'xmlns="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100">'
+            .'<ns1:ExchangedDocumentContext '
+            .'xmlns:ns1="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100">'
+            .'<ns2:GuidelineSpecifiedDocumentContextParameter '
+            .'xmlns:ns2="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100">'
+            .'<ns2:ID>urn:cen.eu:en16931:2017</ns2:ID>'
+            .'</ns2:GuidelineSpecifiedDocumentContextParameter>'
+            .'</ns1:ExchangedDocumentContext>'
+            .'</CrossIndustryInvoice>';
+
+        $document = new \DOMDocument();
+        $document->loadXML($xml);
+
+        self::assertSame('en16931', ProfileHandler::get($document));
+    }
+
     public function testGetThrowsExceptionForMissingId(): void
     {
         $xml = '<?xml version="1.0" encoding="UTF-8"?>'

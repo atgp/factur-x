@@ -27,7 +27,7 @@ class ProfileHandler
      */
     public static function get(\DOMDocument $document): string
     {
-        $xpath = new \DOMXPath($document);
+        $xpath = XmlNamespaceHandler::createXPath($document);
         $elements = $xpath->query('//rsm:ExchangedDocumentContext/ram:GuidelineSpecifiedDocumentContextParameter/ram:ID');
         if (false === $elements || 0 === $elements->length) {
             throw new ProfileResolutionException(

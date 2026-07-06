@@ -99,6 +99,42 @@ class WriterTest extends TestCase
         self::assertSame('Credit note', $info['docTypeName']);
     }
 
+    public function testExtractInvoiceInformationsWithAliasedNamespaces(): void
+    {
+        $writer = new TestableWriter();
+        // Real-world emitters use arbitrary namespace prefixes (ns1, ns2, ...)
+        // and a default namespace for CrossIndustryInvoice instead of rsm/ram/udt.
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>'
+            .'<CrossIndustryInvoice '
+            .'xmlns="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100">'
+            .'<ns1:ExchangedDocument '
+            .'xmlns:ns1="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100">'
+            .'<ns2:ID xmlns:ns2="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100">F00000001</ns2:ID>'
+            .'<ns2:TypeCode xmlns:ns2="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100">380</ns2:TypeCode>'
+            .'<ns2:IssueDateTime xmlns:ns2="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100">'
+            .'<ns3:DateTimeString xmlns:ns3="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100" format="102">20260702</ns3:DateTimeString>'
+            .'</ns2:IssueDateTime>'
+            .'</ns1:ExchangedDocument>'
+            .'<ns4:SupplyChainTradeTransaction '
+            .'xmlns:ns4="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100">'
+            .'<ns5:ApplicableHeaderTradeAgreement '
+            .'xmlns:ns5="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100">'
+            .'<ns5:SellerTradeParty><ns5:Name>FOURNISSEUR</ns5:Name></ns5:SellerTradeParty>'
+            .'</ns5:ApplicableHeaderTradeAgreement>'
+            .'</ns4:SupplyChainTradeTransaction>'
+            .'</CrossIndustryInvoice>';
+
+        $doc = new \DOMDocument();
+        $doc->loadXML($xml);
+
+        $info = $writer->publicExtractInvoiceInformations($doc);
+
+        self::assertSame('F00000001', $info['invoiceId']);
+        self::assertSame('Invoice', $info['docTypeName']);
+        self::assertSame('FOURNISSEUR', $info['seller']);
+        self::assertStringStartsWith('2026-07-02T', $info['date']);
+    }
+
     public function testExtractInvoiceInformationsThrowsForMissingField(): void
     {
         $writer = new TestableWriter();

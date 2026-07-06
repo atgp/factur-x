@@ -18,6 +18,7 @@ use Atgp\FacturX\Exceptions\XsdValidator\XsdValidatorExceptionInterface;
 use Atgp\FacturX\Fpdi\FdpiFacturx;
 use Atgp\FacturX\Utils\Exception\ProfileResolutionException;
 use Atgp\FacturX\Utils\ProfileHandler;
+use Atgp\FacturX\Utils\XmlNamespaceHandler;
 
 class Writer
 {
@@ -250,7 +251,7 @@ class Writer
      */
     protected function extractInvoiceInformations(\DOMDocument $document): array
     {
-        $xpath = new \DOMXPath($document);
+        $xpath = XmlNamespaceHandler::createXPath($document);
 
         $date = $this->queryXpathValue($xpath, '//rsm:ExchangedDocument/ram:IssueDateTime/udt:DateTimeString');
         $dateReformatted = date('Y-m-d\TH:i:s', strtotime($date)).'+00:00';
