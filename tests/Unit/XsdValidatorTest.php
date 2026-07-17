@@ -145,6 +145,9 @@ class XsdValidatorTest extends TestCase
             'basic' => [$fixturesDir.'/facturx-basic.xml', null],
             'en16931' => [$fixturesDir.'/facturx-en16931.xml', null],
             'extended' => [$fixturesDir.'/facturx-extended.xml', null],
+            // BG-X-94 (ManufacturerTradeParty) only exists since Factur-X 1.09, so this
+            // case pins the XSD generation shipped in XsdValidator::XSD_FILENAMES.
+            'extended with Factur-X 1.09 manufacturer' => [$fixturesDir.'/facturx-extended-manufacturer.xml', null],
             'zugferd' => [$fixturesDir.'/zugferd.xml', 'zugferd'],
         ];
     }
