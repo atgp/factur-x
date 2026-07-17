@@ -70,19 +70,26 @@ class XsdValidator
         }
 
         $xsd = static::getXsd($this->profile);
-        libxml_use_internal_errors(true);
-        if (!$doc->schemaValidate($xsd)) {
+        // libxml error handling is global process state : capture the caller's setting and restore
+        // it whatever happens, otherwise a successful validation would leave error reporting
+        // silently suppressed for the rest of the host application.
+        $previousUseInternalErrors = libxml_use_internal_errors(true);
+
+        try {
+            if ($doc->schemaValidate($xsd)) {
+                return true;
+            }
+
             $this->xmlErrors = libxml_get_errors();
             foreach ($this->xmlErrors as $xmlError) {
                 $this->errors[] = sprintf('[line %d] %s : %s', $xmlError->line, $xmlError->code, $xmlError->message);
             }
-            libxml_clear_errors();
-            libxml_use_internal_errors(false);
 
             return false;
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previousUseInternalErrors);
         }
-
-        return true;
     }
 
     /**

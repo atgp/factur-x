@@ -21,6 +21,49 @@ class XsdValidatorTest extends TestCase
             .'</rsm:CrossIndustryInvoice>';
     }
 
+    public function testValidateRestoresLibxmlErrorHandlingOnSuccess(): void
+    {
+        $previous = libxml_use_internal_errors(false);
+        try {
+            $validator = new XsdValidator();
+
+            self::assertTrue($validator->validate($this->validXml));
+            // libxml error handling is global : leaving it on would silently suppress
+            // errors for the rest of the host application.
+            self::assertFalse(libxml_use_internal_errors());
+        } finally {
+            libxml_use_internal_errors($previous);
+        }
+    }
+
+    public function testValidateRestoresLibxmlErrorHandlingOnFailure(): void
+    {
+        $previous = libxml_use_internal_errors(false);
+        try {
+            $validator = new XsdValidator();
+
+            self::assertFalse($validator->validate($this->invalidXml, 'minimum'));
+            self::assertFalse(libxml_use_internal_errors());
+        } finally {
+            libxml_use_internal_errors($previous);
+        }
+    }
+
+    public function testValidatePreservesCallerLibxmlErrorHandling(): void
+    {
+        $previous = libxml_use_internal_errors(true);
+        try {
+            $validator = new XsdValidator();
+
+            // The failure path used to hardcode libxml_use_internal_errors(false), silently
+            // turning off error collection for a caller that had deliberately enabled it.
+            self::assertFalse($validator->validate($this->invalidXml, 'minimum'));
+            self::assertTrue(libxml_use_internal_errors());
+        } finally {
+            libxml_use_internal_errors($previous);
+        }
+    }
+
     public function testValidateThrowsForUnparseableXml(): void
     {
         $validator = new XsdValidator();
