@@ -192,6 +192,42 @@ class WriterTest extends TestCase
         self::assertSame('minimum', $writer->getProfile());
     }
 
+    public function testExtractInvoiceInformationsReadsIssueDateAsUtc(): void
+    {
+        $default = date_default_timezone_get();
+        try {
+            $writer = new TestableWriter();
+            $doc = new \DOMDocument();
+            $doc->loadXML((string) file_get_contents(__DIR__.'/../fixtures/xml/facturx-minimum.xml'));
+
+            // The issue date carries no timezone, so the '+00:00' suffix must be truthful
+            // regardless of where the server runs.
+            date_default_timezone_set('Pacific/Kiritimati'); // UTC+14
+            $ahead = $writer->publicExtractInvoiceInformations($doc)['date'];
+            date_default_timezone_set('Pacific/Midway'); // UTC-11
+            $behind = $writer->publicExtractInvoiceInformations($doc)['date'];
+
+            self::assertSame('2023-01-01T00:00:00+00:00', $ahead);
+            self::assertSame($ahead, $behind);
+        } finally {
+            date_default_timezone_set($default);
+        }
+    }
+
+    public function testExtractInvoiceInformationsThrowsForUnparseableIssueDate(): void
+    {
+        $writer = new TestableWriter();
+        $xml = (string) file_get_contents(__DIR__.'/../fixtures/xml/facturx-minimum.xml');
+        $xml = str_replace('20230101', 'not-a-date', $xml);
+        $doc = new \DOMDocument();
+        $doc->loadXML($xml);
+
+        // strtotime() used to turn this into a silent 1970-01-01.
+        $this->expectException(InvalidXmlException::class);
+        $this->expectExceptionMessage('Unable to parse invoice issue date "not-a-date"');
+        $writer->publicExtractInvoiceInformations($doc);
+    }
+
     public function testPreparePdfMetadataEmitsUtcDates(): void
     {
         $default = date_default_timezone_get();

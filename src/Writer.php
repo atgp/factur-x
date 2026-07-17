@@ -262,7 +262,17 @@ class Writer
         $xpath = XmlNamespaceHandler::createXPath($document);
 
         $date = $this->queryXpathValue($xpath, '//rsm:ExchangedDocument/ram:IssueDateTime/udt:DateTimeString');
-        $dateReformatted = date('Y-m-d\TH:i:s', strtotime($date)).'+00:00';
+        if ('' === trim($date)) {
+            throw new InvalidXmlException('Empty invoice issue date.');
+        }
+        // Issue dates (format 102/203) carry no timezone : reading them as UTC makes the '+00:00'
+        // suffix truthful, where strtotime() silently yielded 1970-01-01 on unparseable values.
+        try {
+            $issuedAt = new \DateTimeImmutable($date, new \DateTimeZone('UTC'));
+        } catch (\Exception $e) {
+            throw new InvalidXmlException(sprintf('Unable to parse invoice issue date "%s".', $date), 0, $e);
+        }
+        $dateReformatted = $issuedAt->format('Y-m-d\TH:i:s').'+00:00';
         $invoiceId = $this->queryXpathValue($xpath, '//rsm:ExchangedDocument/ram:ID');
         $seller = $this->queryXpathValue($xpath, '//ram:ApplicableHeaderTradeAgreement/ram:SellerTradeParty/ram:Name');
         $docType = $this->queryXpathValue($xpath, '//rsm:ExchangedDocument/ram:TypeCode');
