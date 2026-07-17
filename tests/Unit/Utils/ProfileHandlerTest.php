@@ -108,6 +108,41 @@ class ProfileHandlerTest extends TestCase
         self::assertFalse(ProfileHandler::has('invalid'));
     }
 
+    public function testGetReturnsNormalizedProfileForUppercaseUrn(): void
+    {
+        $document = $this->createFacturXDocument('urn:factur-x.eu:1p0:BASIC');
+
+        // URNs are matched case-insensitively, so the returned value must satisfy has() :
+        // returning 'BASIC' made callers reject a profile that was just resolved.
+        $profile = ProfileHandler::get($document);
+
+        self::assertSame('basic', $profile);
+        self::assertTrue(ProfileHandler::has($profile));
+    }
+
+    public function testGetThrowsForUrnWithoutSeparatorWithoutWarning(): void
+    {
+        $document = $this->createFacturXDocument('nocolonhere');
+        $warnings = [];
+        set_error_handler(static function (int $errno, string $message) use (&$warnings): bool {
+            $warnings[] = $message;
+
+            return true;
+        }, \E_WARNING);
+
+        try {
+            ProfileHandler::get($document);
+            self::fail('Expected a ProfileResolutionException.');
+        } catch (ProfileResolutionException $e) {
+            self::assertSame('Invalid Factur-X URN : nocolonhere', $e->getMessage());
+        } finally {
+            restore_error_handler();
+        }
+
+        // A single-segment URN made count($exploded) - 2 negative, reading $exploded[-1].
+        self::assertSame([], $warnings);
+    }
+
     private function createFacturXDocument(string $urn): \DOMDocument
     {
         $xml = '<?xml version="1.0" encoding="UTF-8"?>'

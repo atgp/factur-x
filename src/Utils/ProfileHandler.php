@@ -36,11 +36,14 @@ class ProfileHandler
         }
         $doc_id = $elements->item(0)->nodeValue;
         $doc_id_exploded = explode(':', $doc_id);
-        $profile = end($doc_id_exploded);
-        if (!static::has(strtolower($profile))) {
-            $profile = $doc_id_exploded[count($doc_id_exploded) - 2];
+        // The profile is either the last URN segment ("urn:factur-x.eu:1p0:basic") or the
+        // penultimate one ("urn:cen.eu:en16931:2017"). Profiles are matched case-insensitively,
+        // so the normalized value is returned : callers compare it against self::PROFILES.
+        $profile = strtolower((string) end($doc_id_exploded));
+        if (!static::has($profile) && count($doc_id_exploded) >= 2) {
+            $profile = strtolower($doc_id_exploded[count($doc_id_exploded) - 2]);
         }
-        if (!static::has(strtolower($profile))) {
+        if (!static::has($profile)) {
             throw new ProfileResolutionException('Invalid Factur-X URN : '.$doc_id);
         }
 
