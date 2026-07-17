@@ -118,11 +118,12 @@ class FdpiFacturx extends \setasign\Fpdi\Fpdi
      */
     protected function _putfiles()
     {
-        foreach ($this->files as $i => &$info) {
+        foreach ($this->files as &$info) {
             $this->_put_file_specification($info);
             $info['file_index'] = $this->n;
             $this->_put_file_stream($info);
         }
+        unset($info); // break the reference to the last element, it would leak into any later loop
 
         $this->_put_file_dictionary();
     }
