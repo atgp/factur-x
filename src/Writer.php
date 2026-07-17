@@ -98,7 +98,7 @@ class Writer
             throw new InvalidXmlException('Unable to parse Factur-X XML.');
         }
 
-        $this->profile = $profile;
+        $this->profile = null === $profile ? null : strtolower($profile);
         if (null === $this->profile) {
             try {
                 $this->profile = ProfileHandler::get($docFacturx);
@@ -106,8 +106,13 @@ class Writer
                 throw new InvalidProfileException($e->getMessage(), $e->getCode(), $e);
             }
         }
-        if (!ProfileHandler::has($this->profile)) {
-            throw new InvalidProfileException("Unexpected profile '$profile' for Factur-X invoice.");
+        // Not has() : that accepts legacy ZUGFeRD 1.0, which the reader and the XSD validator
+        // handle but which has no logo nor XMP conformance level to write with.
+        if (!ProfileHandler::isFacturX($this->profile)) {
+            throw new InvalidProfileException(sprintf(
+                "Unexpected profile '%s' for Factur-X invoice, expected one of : %s.",
+                $this->profile, implode(', ', ProfileHandler::PROFILES_FACTURX)
+            ));
         }
 
         if ($validateXSD) {

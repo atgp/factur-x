@@ -4,6 +4,7 @@ namespace Atgp\FacturX\Tests\Unit;
 
 use Atgp\FacturX\Exceptions\Writer\InvalidProfileException;
 use Atgp\FacturX\Exceptions\Writer\InvalidXmlException;
+use Atgp\FacturX\Utils\ProfileHandler;
 use Atgp\FacturX\Writer;
 use PHPUnit\Framework\TestCase;
 
@@ -156,5 +157,46 @@ class WriterTest extends TestCase
         $this->expectException(InvalidXmlException::class);
         $this->expectExceptionMessage('Missing XML element for XPath expression');
         $writer->publicExtractInvoiceInformations($doc);
+    }
+
+    public function testWriterCoversEveryFacturXProfile(): void
+    {
+        // The gate is ProfileHandler::isFacturX(), so every Factur-X profile must have the
+        // assets generate() then indexes. Letting these drift apart is what made 'zugferd'
+        // pass the old gate and die on an undefined array key.
+        self::assertSame(ProfileHandler::PROFILES_FACTURX, array_keys(Writer::LOGOS));
+        self::assertSame(ProfileHandler::PROFILES_FACTURX, array_keys(Writer::XMP_CONFORMANCE_LEVELS));
+    }
+
+    public function testGenerateRejectsProfileItCannotWrite(): void
+    {
+        $writer = new Writer();
+        $xml = (string) file_get_contents(__DIR__.'/../fixtures/xml/zugferd.xml');
+
+        // 'zugferd' is known to ProfileHandler and accepted by the XSD validator, but it is not
+        // a Factur-X profile : the writer must say so rather than fail on a missing logo.
+        $this->expectException(InvalidProfileException::class);
+        $this->expectExceptionMessage("Unexpected profile 'zugferd' for Factur-X invoice, expected one of : minimum, basicwl, basic, en16931, extended.");
+        $writer->generate('fake-pdf', $xml, 'zugferd');
+    }
+
+    public function testGenerateNormalizesProfileCase(): void
+    {
+        $writer = new Writer();
+        $xml = (string) file_get_contents(__DIR__.'/../fixtures/xml/facturx-minimum.xml');
+
+        // Profiles are matched case-insensitively, so an uppercase profile must not be
+        // rejected as unknown.
+        $writer->generate($this->blankPdf(), $xml, 'MINIMUM', false);
+
+        self::assertSame('minimum', $writer->getProfile());
+    }
+
+    private function blankPdf(): string
+    {
+        $pdf = new \setasign\Fpdi\Fpdi();
+        $pdf->AddPage();
+
+        return $pdf->Output('S');
     }
 }

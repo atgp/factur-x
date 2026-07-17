@@ -108,6 +108,25 @@ class ProfileHandlerTest extends TestCase
         self::assertFalse(ProfileHandler::has('invalid'));
     }
 
+    public function testProfilesIsFacturXProfilesPlusZugferd(): void
+    {
+        // PHP 7.4 cannot derive one constant list from the other, so pin the invariant here :
+        // a profile added to PROFILES alone would silently be unwritable.
+        self::assertSame(
+            array_merge(ProfileHandler::PROFILES_FACTURX, [ProfileHandler::PROFILE_ZUGFERD]),
+            ProfileHandler::PROFILES
+        );
+    }
+
+    public function testIsFacturXExcludesLegacyZugferd(): void
+    {
+        self::assertTrue(ProfileHandler::isFacturX(ProfileHandler::PROFILE_FACTURX_EN16931));
+        // Known to the library, but not a Factur-X profile.
+        self::assertTrue(ProfileHandler::has(ProfileHandler::PROFILE_ZUGFERD));
+        self::assertFalse(ProfileHandler::isFacturX(ProfileHandler::PROFILE_ZUGFERD));
+        self::assertFalse(ProfileHandler::isFacturX('invalid'));
+    }
+
     public function testGetReturnsNormalizedProfileForUppercaseUrn(): void
     {
         $document = $this->createFacturXDocument('urn:factur-x.eu:1p0:BASIC');
