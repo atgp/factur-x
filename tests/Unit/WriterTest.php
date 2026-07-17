@@ -192,6 +192,26 @@ class WriterTest extends TestCase
         self::assertSame('minimum', $writer->getProfile());
     }
 
+    public function testPreparePdfMetadataEmitsUtcDates(): void
+    {
+        $default = date_default_timezone_get();
+        try {
+            date_default_timezone_set('Pacific/Midway'); // UTC-11
+            $writer = new TestableWriter();
+            $doc = new \DOMDocument();
+            $doc->loadXML((string) file_get_contents(__DIR__.'/../fixtures/xml/facturx-minimum.xml'));
+
+            $metadata = $writer->publicPreparePdfMetadata($doc);
+
+            // A negative UTC offset used to drag the invoice date back to the previous day.
+            self::assertStringContainsString('dated 2023-01-01', $metadata['subject']);
+            // modifiedDate claims '+00:00' : it must actually be UTC, not server local time.
+            self::assertSame(gmdate('Y-m-d\TH'), substr($metadata['modifiedDate'], 0, 13));
+        } finally {
+            date_default_timezone_set($default);
+        }
+    }
+
     private function blankPdf(): string
     {
         $pdf = new \setasign\Fpdi\Fpdi();

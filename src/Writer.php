@@ -226,7 +226,9 @@ class Writer
     protected function preparePdfMetadata(\DOMDocument $document): array
     {
         $invoiceInformations = $this->extractInvoiceInformations($document);
-        $dateString = date('Y-m-d', strtotime($invoiceInformations['date']));
+        // 'date' is UTC-labelled, so it must be rendered as UTC : date() would render it in the
+        // server timezone and shift the invoice date by a day on negative UTC offsets.
+        $dateString = gmdate('Y-m-d', strtotime($invoiceInformations['date']));
         $title = sprintf('%s : %s %s', $invoiceInformations['seller'], $invoiceInformations['docTypeName'], $invoiceInformations['invoiceId']);
         $subject = sprintf('Factur-X %s %s dated %s issued by %s',
             $invoiceInformations['docTypeName'],
@@ -241,7 +243,8 @@ class Writer
             'title' => $title,
             'subject' => $subject,
             'createdDate' => $invoiceInformations['date'],
-            'modifiedDate' => date('Y-m-d\TH:i:s').'+00:00',
+            // gmdate() : the '+00:00' suffix claims UTC, date() would emit server local time.
+            'modifiedDate' => gmdate('Y-m-d\TH:i:s').'+00:00',
         ];
 
         return $pdfMetadata;

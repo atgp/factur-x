@@ -13,4 +13,9 @@ class TestableWriter extends Writer
     {
         return $this->extractInvoiceInformations($doc);
     }
+
+    public function publicPreparePdfMetadata(\DOMDocument $doc): array
+    {
+        return $this->preparePdfMetadata($doc);
+    }
 }
