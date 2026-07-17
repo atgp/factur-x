@@ -290,25 +290,23 @@ class FdpiFacturx extends \setasign\Fpdi\Fpdi
     {
         parent::_putcatalog();
         if (!empty($this->files)) {
-            if (is_array($this->files)) {
-                $files_ref_str = '';
-                foreach ($this->files as $file) {
-                    if ('' != $files_ref_str) {
-                        $files_ref_str .= ' ';
-                    }
-                    $files_ref_str .= sprintf('%s 0 R', $file['file_index']);
+            $files_ref_str = '';
+            foreach ($this->files as $file) {
+                if ('' != $files_ref_str) {
+                    $files_ref_str .= ' ';
                 }
-                $this->_put(sprintf('/AF [%s]', $files_ref_str));
-            } else {
-                $this->_put(sprintf('/AF %s 0 R', $this->n_files));
+                $files_ref_str .= sprintf('%s 0 R', $file['file_index']);
             }
-            if (0 != $this->description_index) {
-                $this->_put(sprintf('/Metadata %s 0 R', $this->description_index));
-            }
+            $this->_put(sprintf('/AF [%s]', $files_ref_str));
             $this->_put('/Names <<');
             $this->_put('/EmbeddedFiles ');
             $this->_put(sprintf('%s 0 R', $this->n_files));
             $this->_put('>>');
+        }
+        // Not nested in the attachment check : PDF/A-3 mandates the XMP metadata stream whether
+        // or not the document carries embedded files.
+        if (0 != $this->description_index) {
+            $this->_put(sprintf('/Metadata %s 0 R', $this->description_index));
         }
         if (0 != $this->output_intent_index) {
             $this->_put(sprintf('/OutputIntents [%s 0 R]', $this->output_intent_index));
