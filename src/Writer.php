@@ -136,22 +136,40 @@ class Writer
             throw new InvalidRelationshipException('$relationship argument must be one of the values "Data", "Source", "Alternative".');
         }
         $pdfWriter->Attach($facturxXmlRef, Reader::FACTURX_FILENAME, 'Factur-X Invoice', $relationship, 'text#2Fxml');
-        foreach ($additionalAttachments as $attachment) {
-            if (@is_file($attachment['path'])) {
-                $attachment_file_ref = $attachment['path'];
-            } elseif (is_string($attachment['path'])) {
-                $attachment_file_ref = sys_get_temp_dir().'/'.$attachment['name'];
-                file_put_contents($attachment_file_ref, $attachment['path']); // creating tmp file to solve mime_content_type errors
-            } else {
-                throw new InvalidAttachmentException('$attachment_file argument must be a string or a file');
-            }
-            $pdfWriter->Attach($attachment_file_ref, $attachment['name'], $attachment['desc']);
-        }
-        $pdfWriter->OpenAttachmentPane();
-        $pdfWriter->SetPDFVersion('1.7', true); // version 1.7 according to PDF/A-3 ISO 32000-1
-        $this->updatePdfMetadata($pdfWriter, $docFacturx);
 
-        return $pdfWriter->Output('S');
+        $temporaryFiles = [];
+        try {
+            foreach ($additionalAttachments as $attachment) {
+                if (!isset($attachment['name'], $attachment['path'])) {
+                    throw new InvalidAttachmentException('Each additional attachment requires a "name" and a "path" key.');
+                }
+                if (!is_string($attachment['path'])) {
+                    throw new InvalidAttachmentException('$attachment_file argument must be a string or a file');
+                }
+                if (@is_file($attachment['path'])) {
+                    $attachment_file_ref = $attachment['path'];
+                } else {
+                    // Creating tmp file to solve mime_content_type errors.
+                    // basename() keeps the extension mime detection relies on while preventing a
+                    // crafted name from escaping the temp directory ; uniqid() avoids collisions
+                    // between concurrent generations.
+                    $attachment_file_ref = sprintf('%s/%s-%s', sys_get_temp_dir(), uniqid(), basename($attachment['name']));
+                    file_put_contents($attachment_file_ref, $attachment['path']);
+                    $temporaryFiles[] = $attachment_file_ref;
+                }
+                $pdfWriter->Attach($attachment_file_ref, $attachment['name'], $attachment['desc'] ?? '');
+            }
+            $pdfWriter->OpenAttachmentPane();
+            $pdfWriter->SetPDFVersion('1.7', true); // version 1.7 according to PDF/A-3 ISO 32000-1
+            $this->updatePdfMetadata($pdfWriter, $docFacturx);
+
+            // Output() reads the attachment streams, so temporary files must outlive it.
+            return $pdfWriter->Output('S');
+        } finally {
+            foreach ($temporaryFiles as $temporaryFile) {
+                @unlink($temporaryFile);
+            }
+        }
     }
 
     /**

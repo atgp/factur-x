@@ -2,6 +2,7 @@
 
 namespace Atgp\FacturX\Tests\Unit;
 
+use Atgp\FacturX\Exceptions\Writer\InvalidAttachmentException;
 use Atgp\FacturX\Exceptions\Writer\InvalidProfileException;
 use Atgp\FacturX\Exceptions\Writer\InvalidXmlException;
 use Atgp\FacturX\Utils\ProfileHandler;
@@ -246,6 +247,50 @@ class WriterTest extends TestCase
         } finally {
             date_default_timezone_set($default);
         }
+    }
+
+    public function testGenerateKeepsAttachmentTempFilesInsideTempDir(): void
+    {
+        $writer = new Writer();
+        $xml = (string) file_get_contents(__DIR__.'/../fixtures/xml/facturx-minimum.xml');
+        $escaped = sys_get_temp_dir().'/../factur-x-traversal-probe.txt';
+        @unlink($escaped);
+
+        $writer->generate($this->blankPdf(), $xml, null, false, [[
+            'name' => '../factur-x-traversal-probe.txt',
+            'path' => 'attachment content',
+            'desc' => 'probe',
+        ]]);
+
+        // The attachment name is caller-controlled and must not steer the temp file write.
+        self::assertFileDoesNotExist($escaped);
+    }
+
+    public function testGenerateRemovesAttachmentTempFiles(): void
+    {
+        $writer = new Writer();
+        $xml = (string) file_get_contents(__DIR__.'/../fixtures/xml/facturx-minimum.xml');
+        $pattern = sys_get_temp_dir().'/*factur-x-leftover-probe.txt';
+        array_map('unlink', (array) glob($pattern));
+
+        $pdf = $writer->generate($this->blankPdf(), $xml, null, false, [[
+            'name' => 'factur-x-leftover-probe.txt',
+            'path' => 'attachment content',
+            'desc' => 'probe',
+        ]]);
+
+        self::assertStringStartsWith('%PDF-', $pdf);
+        self::assertSame([], glob($pattern), 'temporary attachment files must not outlive generate()');
+    }
+
+    public function testGenerateThrowsForAttachmentWithoutName(): void
+    {
+        $writer = new Writer();
+        $xml = (string) file_get_contents(__DIR__.'/../fixtures/xml/facturx-minimum.xml');
+
+        $this->expectException(InvalidAttachmentException::class);
+        $this->expectExceptionMessage('requires a "name" and a "path" key');
+        $writer->generate($this->blankPdf(), $xml, null, false, [['path' => 'content']]);
     }
 
     private function blankPdf(): string
