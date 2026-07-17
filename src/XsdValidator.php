@@ -66,7 +66,7 @@ class XsdValidator
             }
         }
         if (!ProfileHandler::has($this->profile)) {
-            throw new InvalidProfileException("Unexpected profile '$profile' for Factur-X invoice.");
+            throw new InvalidProfileException("Unexpected profile '{$this->profile}' for Factur-X invoice.");
         }
 
         $xsd = static::getXsd($this->profile);
