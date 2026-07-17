@@ -195,10 +195,10 @@ class Writer
     /**
      * Updates PDF metadata to according to Factur-X XML data.
      *
-     * @param FdpiFacturx  &$pdfWriter
+     * @param FdpiFacturx  $pdfWriter
      * @param \DOMDocument $document
      */
-    protected function updatePdfMetadata(FdpiFacturx &$pdfWriter, \DOMDocument $document)
+    protected function updatePdfMetadata(FdpiFacturx $pdfWriter, \DOMDocument $document)
     {
         $pdf_metadata_infos = $this->preparePdfMetadata($document);
         $pdfWriter->set_pdf_metadata_infos($pdf_metadata_infos);
