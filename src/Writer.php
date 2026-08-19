@@ -98,7 +98,7 @@ class Writer
             throw new InvalidXmlException('Unable to parse Factur-X XML.');
         }
 
-        $this->profile = $profile;
+        $this->profile = null === $profile ? null : strtolower($profile);
         if (null === $this->profile) {
             try {
                 $this->profile = ProfileHandler::get($docFacturx);
@@ -106,8 +106,13 @@ class Writer
                 throw new InvalidProfileException($e->getMessage(), $e->getCode(), $e);
             }
         }
-        if (!ProfileHandler::has($this->profile)) {
-            throw new InvalidProfileException("Unexpected profile '$profile' for Factur-X invoice.");
+        // Not has() : that accepts legacy ZUGFeRD 1.0, which the reader and the XSD validator
+        // handle but which has no logo nor XMP conformance level to write with.
+        if (!ProfileHandler::isFacturX($this->profile)) {
+            throw new InvalidProfileException(sprintf(
+                "Unexpected profile '%s' for Factur-X invoice, expected one of : %s.",
+                $this->profile, implode(', ', ProfileHandler::PROFILES_FACTURX)
+            ));
         }
 
         if ($validateXSD) {
@@ -131,22 +136,40 @@ class Writer
             throw new InvalidRelationshipException('$relationship argument must be one of the values "Data", "Source", "Alternative".');
         }
         $pdfWriter->Attach($facturxXmlRef, Reader::FACTURX_FILENAME, 'Factur-X Invoice', $relationship, 'text#2Fxml');
-        foreach ($additionalAttachments as $attachment) {
-            if (@is_file($attachment['path'])) {
-                $attachment_file_ref = $attachment['path'];
-            } elseif (is_string($attachment['path'])) {
-                $attachment_file_ref = sys_get_temp_dir().'/'.$attachment['name'];
-                file_put_contents($attachment_file_ref, $attachment['path']); // creating tmp file to solve mime_content_type errors
-            } else {
-                throw new InvalidAttachmentException('$attachment_file argument must be a string or a file');
-            }
-            $pdfWriter->Attach($attachment_file_ref, $attachment['name'], $attachment['desc']);
-        }
-        $pdfWriter->OpenAttachmentPane();
-        $pdfWriter->SetPDFVersion('1.7', true); // version 1.7 according to PDF/A-3 ISO 32000-1
-        $this->updatePdfMetadata($pdfWriter, $docFacturx);
 
-        return $pdfWriter->Output('S');
+        $temporaryFiles = [];
+        try {
+            foreach ($additionalAttachments as $attachment) {
+                if (!isset($attachment['name'], $attachment['path'])) {
+                    throw new InvalidAttachmentException('Each additional attachment requires a "name" and a "path" key.');
+                }
+                if (!is_string($attachment['path'])) {
+                    throw new InvalidAttachmentException('$attachment_file argument must be a string or a file');
+                }
+                if (@is_file($attachment['path'])) {
+                    $attachment_file_ref = $attachment['path'];
+                } else {
+                    // Creating tmp file to solve mime_content_type errors.
+                    // basename() keeps the extension mime detection relies on while preventing a
+                    // crafted name from escaping the temp directory ; uniqid() avoids collisions
+                    // between concurrent generations.
+                    $attachment_file_ref = sprintf('%s/%s-%s', sys_get_temp_dir(), uniqid(), basename($attachment['name']));
+                    file_put_contents($attachment_file_ref, $attachment['path']);
+                    $temporaryFiles[] = $attachment_file_ref;
+                }
+                $pdfWriter->Attach($attachment_file_ref, $attachment['name'], $attachment['desc'] ?? '');
+            }
+            $pdfWriter->OpenAttachmentPane();
+            $pdfWriter->SetPDFVersion('1.7', true); // version 1.7 according to PDF/A-3 ISO 32000-1
+            $this->updatePdfMetadata($pdfWriter, $docFacturx);
+
+            // Output() reads the attachment streams, so temporary files must outlive it.
+            return $pdfWriter->Output('S');
+        } finally {
+            foreach ($temporaryFiles as $temporaryFile) {
+                @unlink($temporaryFile);
+            }
+        }
     }
 
     /**
@@ -172,10 +195,10 @@ class Writer
     /**
      * Updates PDF metadata to according to Factur-X XML data.
      *
-     * @param FdpiFacturx  &$pdfWriter
+     * @param FdpiFacturx  $pdfWriter
      * @param \DOMDocument $document
      */
-    protected function updatePdfMetadata(FdpiFacturx &$pdfWriter, \DOMDocument $document)
+    protected function updatePdfMetadata(FdpiFacturx $pdfWriter, \DOMDocument $document)
     {
         $pdf_metadata_infos = $this->preparePdfMetadata($document);
         $pdfWriter->set_pdf_metadata_infos($pdf_metadata_infos);
@@ -221,7 +244,9 @@ class Writer
     protected function preparePdfMetadata(\DOMDocument $document): array
     {
         $invoiceInformations = $this->extractInvoiceInformations($document);
-        $dateString = date('Y-m-d', strtotime($invoiceInformations['date']));
+        // 'date' is UTC-labelled, so it must be rendered as UTC : date() would render it in the
+        // server timezone and shift the invoice date by a day on negative UTC offsets.
+        $dateString = gmdate('Y-m-d', strtotime($invoiceInformations['date']));
         $title = sprintf('%s : %s %s', $invoiceInformations['seller'], $invoiceInformations['docTypeName'], $invoiceInformations['invoiceId']);
         $subject = sprintf('Factur-X %s %s dated %s issued by %s',
             $invoiceInformations['docTypeName'],
@@ -236,7 +261,8 @@ class Writer
             'title' => $title,
             'subject' => $subject,
             'createdDate' => $invoiceInformations['date'],
-            'modifiedDate' => date('Y-m-d\TH:i:s').'+00:00',
+            // gmdate() : the '+00:00' suffix claims UTC, date() would emit server local time.
+            'modifiedDate' => gmdate('Y-m-d\TH:i:s').'+00:00',
         ];
 
         return $pdfMetadata;
@@ -254,7 +280,17 @@ class Writer
         $xpath = XmlNamespaceHandler::createXPath($document);
 
         $date = $this->queryXpathValue($xpath, '//rsm:ExchangedDocument/ram:IssueDateTime/udt:DateTimeString');
-        $dateReformatted = date('Y-m-d\TH:i:s', strtotime($date)).'+00:00';
+        if ('' === trim($date)) {
+            throw new InvalidXmlException('Empty invoice issue date.');
+        }
+        // Issue dates (format 102/203) carry no timezone : reading them as UTC makes the '+00:00'
+        // suffix truthful, where strtotime() silently yielded 1970-01-01 on unparseable values.
+        try {
+            $issuedAt = new \DateTimeImmutable($date, new \DateTimeZone('UTC'));
+        } catch (\Exception $e) {
+            throw new InvalidXmlException(sprintf('Unable to parse invoice issue date "%s".', $date), 0, $e);
+        }
+        $dateReformatted = $issuedAt->format('Y-m-d\TH:i:s').'+00:00';
         $invoiceId = $this->queryXpathValue($xpath, '//rsm:ExchangedDocument/ram:ID');
         $seller = $this->queryXpathValue($xpath, '//ram:ApplicableHeaderTradeAgreement/ram:SellerTradeParty/ram:Name');
         $docType = $this->queryXpathValue($xpath, '//rsm:ExchangedDocument/ram:TypeCode');

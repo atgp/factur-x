@@ -2,8 +2,10 @@
 
 namespace Atgp\FacturX\Tests\Unit;
 
+use Atgp\FacturX\Exceptions\Writer\InvalidAttachmentException;
 use Atgp\FacturX\Exceptions\Writer\InvalidProfileException;
 use Atgp\FacturX\Exceptions\Writer\InvalidXmlException;
+use Atgp\FacturX\Utils\ProfileHandler;
 use Atgp\FacturX\Writer;
 use PHPUnit\Framework\TestCase;
 
@@ -156,5 +158,146 @@ class WriterTest extends TestCase
         $this->expectException(InvalidXmlException::class);
         $this->expectExceptionMessage('Missing XML element for XPath expression');
         $writer->publicExtractInvoiceInformations($doc);
+    }
+
+    public function testWriterCoversEveryFacturXProfile(): void
+    {
+        // The gate is ProfileHandler::isFacturX(), so every Factur-X profile must have the
+        // assets generate() then indexes. Letting these drift apart is what made 'zugferd'
+        // pass the old gate and die on an undefined array key.
+        self::assertSame(ProfileHandler::PROFILES_FACTURX, array_keys(Writer::LOGOS));
+        self::assertSame(ProfileHandler::PROFILES_FACTURX, array_keys(Writer::XMP_CONFORMANCE_LEVELS));
+    }
+
+    public function testGenerateRejectsProfileItCannotWrite(): void
+    {
+        $writer = new Writer();
+        $xml = (string) file_get_contents(__DIR__.'/../fixtures/xml/zugferd.xml');
+
+        // 'zugferd' is known to ProfileHandler and accepted by the XSD validator, but it is not
+        // a Factur-X profile : the writer must say so rather than fail on a missing logo.
+        $this->expectException(InvalidProfileException::class);
+        $this->expectExceptionMessage("Unexpected profile 'zugferd' for Factur-X invoice, expected one of : minimum, basicwl, basic, en16931, extended.");
+        $writer->generate('fake-pdf', $xml, 'zugferd');
+    }
+
+    public function testGenerateNormalizesProfileCase(): void
+    {
+        $writer = new Writer();
+        $xml = (string) file_get_contents(__DIR__.'/../fixtures/xml/facturx-minimum.xml');
+
+        // Profiles are matched case-insensitively, so an uppercase profile must not be
+        // rejected as unknown.
+        $writer->generate($this->blankPdf(), $xml, 'MINIMUM', false);
+
+        self::assertSame('minimum', $writer->getProfile());
+    }
+
+    public function testExtractInvoiceInformationsReadsIssueDateAsUtc(): void
+    {
+        $default = date_default_timezone_get();
+        try {
+            $writer = new TestableWriter();
+            $doc = new \DOMDocument();
+            $doc->loadXML((string) file_get_contents(__DIR__.'/../fixtures/xml/facturx-minimum.xml'));
+
+            // The issue date carries no timezone, so the '+00:00' suffix must be truthful
+            // regardless of where the server runs.
+            date_default_timezone_set('Pacific/Kiritimati'); // UTC+14
+            $ahead = $writer->publicExtractInvoiceInformations($doc)['date'];
+            date_default_timezone_set('Pacific/Midway'); // UTC-11
+            $behind = $writer->publicExtractInvoiceInformations($doc)['date'];
+
+            self::assertSame('2023-01-01T00:00:00+00:00', $ahead);
+            self::assertSame($ahead, $behind);
+        } finally {
+            date_default_timezone_set($default);
+        }
+    }
+
+    public function testExtractInvoiceInformationsThrowsForUnparseableIssueDate(): void
+    {
+        $writer = new TestableWriter();
+        $xml = (string) file_get_contents(__DIR__.'/../fixtures/xml/facturx-minimum.xml');
+        $xml = str_replace('20230101', 'not-a-date', $xml);
+        $doc = new \DOMDocument();
+        $doc->loadXML($xml);
+
+        // strtotime() used to turn this into a silent 1970-01-01.
+        $this->expectException(InvalidXmlException::class);
+        $this->expectExceptionMessage('Unable to parse invoice issue date "not-a-date"');
+        $writer->publicExtractInvoiceInformations($doc);
+    }
+
+    public function testPreparePdfMetadataEmitsUtcDates(): void
+    {
+        $default = date_default_timezone_get();
+        try {
+            date_default_timezone_set('Pacific/Midway'); // UTC-11
+            $writer = new TestableWriter();
+            $doc = new \DOMDocument();
+            $doc->loadXML((string) file_get_contents(__DIR__.'/../fixtures/xml/facturx-minimum.xml'));
+
+            $metadata = $writer->publicPreparePdfMetadata($doc);
+
+            // A negative UTC offset used to drag the invoice date back to the previous day.
+            self::assertStringContainsString('dated 2023-01-01', $metadata['subject']);
+            // modifiedDate claims '+00:00' : it must actually be UTC, not server local time.
+            self::assertSame(gmdate('Y-m-d\TH'), substr($metadata['modifiedDate'], 0, 13));
+        } finally {
+            date_default_timezone_set($default);
+        }
+    }
+
+    public function testGenerateKeepsAttachmentTempFilesInsideTempDir(): void
+    {
+        $writer = new Writer();
+        $xml = (string) file_get_contents(__DIR__.'/../fixtures/xml/facturx-minimum.xml');
+        $escaped = sys_get_temp_dir().'/../factur-x-traversal-probe.txt';
+        @unlink($escaped);
+
+        $writer->generate($this->blankPdf(), $xml, null, false, [[
+            'name' => '../factur-x-traversal-probe.txt',
+            'path' => 'attachment content',
+            'desc' => 'probe',
+        ]]);
+
+        // The attachment name is caller-controlled and must not steer the temp file write.
+        self::assertFileDoesNotExist($escaped);
+    }
+
+    public function testGenerateRemovesAttachmentTempFiles(): void
+    {
+        $writer = new Writer();
+        $xml = (string) file_get_contents(__DIR__.'/../fixtures/xml/facturx-minimum.xml');
+        $pattern = sys_get_temp_dir().'/*factur-x-leftover-probe.txt';
+        array_map('unlink', (array) glob($pattern));
+
+        $pdf = $writer->generate($this->blankPdf(), $xml, null, false, [[
+            'name' => 'factur-x-leftover-probe.txt',
+            'path' => 'attachment content',
+            'desc' => 'probe',
+        ]]);
+
+        self::assertStringStartsWith('%PDF-', $pdf);
+        self::assertSame([], glob($pattern), 'temporary attachment files must not outlive generate()');
+    }
+
+    public function testGenerateThrowsForAttachmentWithoutName(): void
+    {
+        $writer = new Writer();
+        $xml = (string) file_get_contents(__DIR__.'/../fixtures/xml/facturx-minimum.xml');
+
+        $this->expectException(InvalidAttachmentException::class);
+        $this->expectExceptionMessage('requires a "name" and a "path" key');
+        $writer->generate($this->blankPdf(), $xml, null, false, [['path' => 'content']]);
+    }
+
+    private function blankPdf(): string
+    {
+        $pdf = new \setasign\Fpdi\Fpdi();
+        $pdf->AddPage();
+
+        return $pdf->Output('S');
     }
 }

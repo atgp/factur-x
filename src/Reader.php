@@ -60,12 +60,18 @@ class Reader
                     continue;
                 }
                 // Smalot resolve embedded stream content directly (without need to search /EmbeddedFile by reference)
-                if (null === $xml = $embeddedFileReference->get('F')->getContent()) {
+                $xml = $embeddedFileReference->get('F')->getContent();
+                if (null === $xml || '' === $xml) {
+                    // The Filespec was found : the failure is the unreadable stream behind it,
+                    // reporting it as a missing Filespec would send readers looking for the wrong thing.
                     throw new EmbeddedFileNotReadableException('EmbeddedFile not readable.');
                 }
+
+                // First match wins : without this, a later Filespec would silently override it.
+                break;
             }
 
-            if (!$xml) {
+            if (null === $xml) {
                 throw new FilespecNotFoundException('Factur-x Filespec not found.');
             }
         } catch (ExceptionInterface $e) {
