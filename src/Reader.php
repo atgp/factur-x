@@ -14,6 +14,8 @@ use Atgp\FacturX\Exceptions\Reader\EmbeddedFileNotReadableException;
 use Atgp\FacturX\Exceptions\Reader\FilespecNotFoundException;
 use Atgp\FacturX\Exceptions\Reader\InvalidXmlException;
 use Atgp\FacturX\Exceptions\Reader\ReaderExceptionInterface;
+use Atgp\FacturX\Smalot\ObjectStreamAwareParser;
+use Smalot\PdfParser\Parser;
 use Smalot\PdfParser\PDFObject;
 
 class Reader
@@ -40,29 +42,11 @@ class Reader
     public function extractXML(string $pdfBinary, bool $validateXsd = true, array $allowedFilenames = self::ALLOWED_FILENAMES): string
     {
         try {
-            $parser = new \Smalot\PdfParser\Parser($this->smalotPdfParserCfg, $this->smalotPdfParserConfig);
-            $pdfParsed = $parser->parseContent($pdfBinary);
+            $xml = $this->findXml(new Parser($this->smalotPdfParserCfg, $this->smalotPdfParserConfig), $pdfBinary, $allowedFilenames);
 
-            /** @var PDFObject $spec */
-            $xml = null;
-            foreach ($pdfParsed->getObjectsByType('Filespec') as $spec) {
-                if (!in_array($spec->get('F')->getContent(), $allowedFilenames)) {
-                    continue;
-                }
-                // Not an embedded file
-                if (!$spec->has('EF')) {
-                    continue;
-                }
-                $embeddedFileReference = $spec->get('EF');
-                if (!$embeddedFileReference->has('F')) {
-                    // /EF /F contains reference to /EmbeddedFile object
-                    // (raw reference is not displayable with Smalot)
-                    continue;
-                }
-                // Smalot resolve embedded stream content directly (without need to search /EmbeddedFile by reference)
-                if (null === $xml = $embeddedFileReference->get('F')->getContent()) {
-                    throw new EmbeddedFileNotReadableException('EmbeddedFile not readable.');
-                }
+            // Smalot loses the objects of some object streams (see ObjectStreamAwareParser)
+            if (null === $xml && 1 === preg_match('~/Type\s*/ObjStm~', $pdfBinary)) {
+                $xml = $this->findXml(new ObjectStreamAwareParser($this->smalotPdfParserCfg, $this->smalotPdfParserConfig), $pdfBinary, $allowedFilenames);
             }
 
             if (!$xml) {
@@ -77,6 +61,41 @@ class Reader
         if ($validateXsd) {
             $validator = new XsdValidator();
             $validator->validateWithException($xml);
+        }
+
+        return $xml;
+    }
+
+    /**
+     * @param string[] $allowedFilenames
+     *
+     * @throws EmbeddedFileNotReadableException
+     * @return string|null                      content of the embedded XML, null if the parser finds no Filespec for it
+     */
+    private function findXml(Parser $parser, string $pdfBinary, array $allowedFilenames): ?string
+    {
+        $pdfParsed = $parser->parseContent($pdfBinary);
+
+        /** @var PDFObject $spec */
+        $xml = null;
+        foreach ($pdfParsed->getObjectsByType('Filespec') as $spec) {
+            if (!in_array($spec->get('F')->getContent(), $allowedFilenames)) {
+                continue;
+            }
+            // Not an embedded file
+            if (!$spec->has('EF')) {
+                continue;
+            }
+            $embeddedFileReference = $spec->get('EF');
+            if (!$embeddedFileReference->has('F')) {
+                // /EF /F contains reference to /EmbeddedFile object
+                // (raw reference is not displayable with Smalot)
+                continue;
+            }
+            // Smalot resolve embedded stream content directly (without need to search /EmbeddedFile by reference)
+            if (null === $xml = $embeddedFileReference->get('F')->getContent()) {
+                throw new EmbeddedFileNotReadableException('EmbeddedFile not readable.');
+            }
         }
 
         return $xml;
