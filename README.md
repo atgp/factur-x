@@ -74,6 +74,8 @@ This project is licensed under MIT License
 Changelog
 ---------
 
+- v3.5.1 : 2026-11-24
+  - (reader) Fix Filespec not found on PDF whose object stream offsets count the white-space following the offsets table
 - v3.5.0 : 2026-08-18
    - Upgrade XSD Schemas to 1.09
 - v3.4.1 : 2026-07-15
